@@ -10,5 +10,14 @@
 #define SUCCESS 0
 #define FAILURE -1
 
+typedef struct my_s {
+	char *infile;
+	char *outfile;
+	char *content;
+	int	status;
+	int cmds;
+}	t_args;
+
+
 
 #endif
