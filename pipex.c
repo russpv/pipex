@@ -14,93 +14,149 @@
 // read arg as infile, then outfile
 // getargcount() ... parse input
 // how to create a pipe with PIPE?
-int main(int argc, char *argv[])
+
+static void    _err(const char *msg)
 {
-	if (argc < 4)
-	{
-		printf("Insufficient arguments.");
-		return (EXIT_FAILURE);
-	}
+    perror(msg);
+    exit(EXIT_FAILURE);
+}
+
+/* writes infd to fresh outname file */
+static void    _writeout(char *outname, int infd)
+{
+    int bytes_read;
+    int bytes_written;
+    int buffer[BUFSZ];
+
+    ft_memset(buffer, 0, BUFSZ);
+    int outfd = open(outname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (outfd == -1)
+        _err("open");
+    while ((bytes_read = read(infd, buffer, BUFSZ)) != 0)
+    {
+        bytes_written = write(outfd, buffer, bytes_read);
+        if (bytes_written != bytes_read)
+            _err("writeout");
+    }
+}
+
+static int _redirect(int tofile, char *topath, int fromfile)
+{
+    int fd;
+    
+    if (topath)
+    {
+        fd = open(topath, O_RDONLY);
+        if (fd == -1)
+            _err("open");
+    }
+    else 
+        fd = tofile;
+    if (dup2(fd, fromfile) == -1)
+        _err("dup2 stdin");
+    close(fd);
+    return (fromfile);
+}
+
+static char *_getline(const char *path)
+{
+    int fd;
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        _err("open");
+    return (get_next_line(fd));
+}
+void    printarr(char **arr)
+{
+    while (arr) {
+        printf("%s\n", *arr);
+        arr++;
+    } fflush(stdout);
+}
+
+
+static char **_load_args(const char *arg)
+{
+    char **arr;
+    char **res;
+    size_t len;
+
+    printf("loadargs"); fflush(stdout);
+    arr = ft_split(arg, ' ');
+    len = 0;
+    while (arr[len])
+        len++;
+    printf("malloc"); fflush(stdout);
+    res = malloc(sizeof(char *) * (len + 1));
+    if (!res)
+    {
+        free(arr);
+        return (NULL);
+    }
+    len = 0;
+    while (arr[len])
+        res[len] = arr[len];
+    free(arr);
+    res[len] = NULL;
+    printarr(res);
+    return (res);
+}
+/* arg 2: filepath; arg 3: command ... */
+int main(int argc, char *argv[], char *env[])
+{
+	if (argc < 4) // execname infile cmd1 cmd2
+        _err("Insufficient arguments.");
 	// parse input
 	const char *cmd = argv[2];
 	const char *infile = argv[1];
 	char *content;
 	const char *outfile = argv[argc - 1];
-	int fd; pid_t p; int status; int fildes[2];
+	int fd; pid_t p; int status; int fildes[2]; int fildes2[2];
+    int i = 1; // argv COMMAND index
 	
-	/*
-	// 
-	fd = open(infile, O_RDONLY);
-	if (fd == -1)
-	{
-		perror("Failed to open file");
-		return (FAILURE);
-	}
-	*/
-	// TODO parse args into queue... argv**
-	// TODO execve() to use args
-	// TODO dup2 for each child command redirect to filename argv[argc]
-	// TODO dup2 for first command redirect filename argv[1] to STDIN
-	//
-	while (argc--) {	
-		/* PIPE: child to push output to parent (children spawn parents) */ 
-		if (pipe(fildes) < 0) /* read on fildes[0] write on fildes[1] */
-		{
-			perror("Pipe dain't werkin rite");
-			exit(EXIT_FAILURE);
-		}
-		p = fork();
-		if (0 == p) /* This is the prior process in the pipeline */
+    printarr(env);
+	if (pipe(fildes) < 0) /* init pipe; read on fildes[0] write on fildes[1] */
+	    _err("pipe");
+	while (++i < argc) {	// tempfd, fd, pipes are avail to parent/child
+		p = fork(); // spawns independent deep copies of variables; points to same virtual mem
+		if (0 == p)
 		{ 
-			printf("%d:child:\n", argc); 
-			if (close(fildes[0] == -1)) { // close read end
-				perror("close");
-				exit(EXIT_FAILURE);
-			}
-			fd = open("file.txt", O_RDONLY);
-			if (fd == -1) {
-				perror("open");
-				exit(EXIT_FAILURE);
-			}
-			if (dup2(fd, STDIN_FILENO) == -1) {
-				perror("dup2");
-				exit(EXIT_FAILURE);
-			}
-			//close(fd);
-			dup2(fildes[1], STDOUT_FILENO);
-			close(fildes[1]);	
-			char *argv2[] = {"cat", NULL}; // perhaps this passes flags
-			if (execve("/bin/cat", argv2, NULL) == -1) {
-				perror("execve sucked");
-				exit(EXIT_FAILURE);
-			} // what follows after execve is not reached
-			//printf("we good\n"); fflush(stdout);
-			//write(fildes[1], "from child\nnextline", 19); 
-			//write(fildes[1], ft_itoa(argc), 1);
-			//close(fildes[1]);
-			//fflush(stdout);
+			printf("%d:child:", i - 1); fflush(stdout); 
+			close(fildes[0]);
+            if (i == 2) // read from input file on first command
+                _redirect(-1, argv[1], STDIN_FILENO);
+            else 
+                _redirect(-1, "temp", STDIN_FILENO); 
+            printf("redirected. loading %s", argv[i]); fflush(stdout);
+            if (i != argc - 1) {// write to pipe if not last command
+                _redirect(fildes[1], 0, STDOUT_FILENO);}
+            const char *argv2[] = {"cat",  NULL}; //_load_args(argv[i]);
+			if (execve("cat", (char *const *)argv2, NULL) == -1)
+				_err("execve sucked");
 		}
-		else if (p > 0) /* This is the next process */
+		else if (p > 0) 
 		{
 			waitpid(p, &status, 0);
+			printf("%d:parent:", i - 1); fflush(stdout);
 			close(fildes[1]);
-			printf("%d:parent:", argc);
-			char *line = "\0";
-			while (line) {
-				if (*line)
-					printf("%s", line); fflush(stdout);
-				line = get_next_line(fildes[0]);
-			}
+            if (i != argc - 1) // write to tempfile if not last command
+            { 
+                _writeout("temp", fildes[0]);
+               //printf("writtenout."); fflush(stdout); 
+		        if (pipe(fildes2) < 0) /*makes another pipe */
+		            _err("pipe2");
+                if (dup2(fildes2[0], fildes[0]) < 0 || dup2(fildes2[1], fildes[1]) < 0)
+                    _err("dup2");
+                //printf("pipes duped"); fflush(stdout);
+                printf("debug: written to temp: %s\n", _getline("temp"));
+            }
+            close(fildes[0]);
 			printf("\n"); fflush(stdout);
-			close(fildes[0]);
-
-			exit(EXIT_SUCCESS);
 		}
 		else
-		{
-			perror("fork dain't worked\n");
-			exit(EXIT_FAILURE);
-		}
+            _err("fork");
 	}
+    unlink("temp"); 
 	return (EXIT_SUCCESS);
 }
