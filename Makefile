@@ -1,7 +1,21 @@
 NAME = pipex
 SOURCES = pipex.c \
+		  doers.c \
+		  utils.c \
+		  ft_memset.c \
+		  ft_memcpy.c \
+		  ft_memmove.c \
+		  ft_strlen.c \
+		  ft_strlcat.c \
+		  ft_strdup.c \
+		  ft_strjoin.c \
+		  ft_substr.c \
+		  ft_split.c \
+		  ft_strnlen_extra.c \
+		  ft_strchr.c \
+		  ft_isprint.c 
 
-BSOURCES =	get_next_line_bonus.c \
+BSOURCES =	pipex.c \
 
 YELLOW = \033[33m
 GREEN = \033[32m
@@ -11,7 +25,8 @@ BOLD = \033[1m
 OBJECTS = $(SOURCES:.c=.o)
 BOBJECTS = $(BSOURCES:.c=.o)
 
-AR = ar
+OUTPUT = executable
+AR = ar # NOT USED
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
 LIB = ranlib
@@ -19,9 +34,9 @@ LIB = ranlib
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
-	@echo "Creating $(NAME) archive..."
-	$(AR) -rvcs $@ $?  # ar update, create, update index
-	$(LIB) $(NAME)
+	@echo "Creating $(NAME) $(OUTPUT)..."
+	$(CC) $? -o $@ $(CFLAGS)
+	chmod +x $@
 	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
 	@echo "$(YELLOW)Created: $(words $(OBJECTS) ) object file(s)$(RESET)"
 	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
@@ -37,7 +52,7 @@ $(NAME): $(OBJECTS)
 	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $? #Initial compilation of .c files
+	$(CC) -c $(CFLAGS) $? -o $@ #Initial compilation of .c files
 
 clean:
 	rm -f $(OBJECTS) $(BOBJECTS) 

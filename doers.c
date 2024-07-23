@@ -25,17 +25,23 @@ int	get_env_path(char **env)
 
 static void _init_struct(t_args *st)
 {
+	char **envp = malloc(sizeof(char *) * 2);
+	if (!envp)
+		err("struct init malloc", NULL, NULL);
+	envp[0] = "TMOUT=1";
+	envp[1] = NULL;
+
 	st->argc = 0;
 	st->cmd_count = 0;
 	st->path_offset = 0;
 	st->cmdpaths = NULL;
 	st->execargs = NULL;
+	st->envp = envp;
 	st->fd = 0;
 	st->fildes[0] = -1;
 	st->fildes[1] = -1;
 	st->fildes2[0] = -1;
 	st->fildes2[1] = -1;
-
 }
 
 /* Loads a single absolute command path into struct at index idx if accessible */
@@ -63,24 +69,57 @@ static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 	return (FAILURE);
 }
 
-/* splits argv for use in execve() */
-static int	_load_cmdargs(int argc, char **argv, t_args *st)
+static void	_remove_outer_quotes(char ***arr)
 {
 	int i;
+	int j;
+	size_t len;
 
 	i = 0;
-	st->execargs = malloc( sizeof(char **) * (st->cmd_count + 1));
-	if (!st->execargs)
-		err("_load_cmdargs()", st, NULL);
-	while (argv[i + 2])
+	while (arr && arr[i])
 	{
-		st->execargs[i] = ft_split(argv[i + 2], ' ');
-		//printf("peeld off %d:_%s,%s\n", i, st->execargs[i][0], st->execargs[i][1]); fflush(stdout);
+		j = 0;
+		while (arr[i][j])
+		{
+			len = ft_strlen(arr[i][j]);
+			if (len > 0 && arr[i][j][0] == '\'')
+			{
+				ft_memmove((void *)arr[i][j], arr[i][j] + 1, len);
+				--len;
+			}
+			if (len > 0 && arr[i][j][len - 1] == '\'')
+				arr[i][j][len - 1] = 0;
+			j++;
+		}
+		i++;
+	}
+}
+
+
+/* splits argv for use in execve() */
+static int	_load_cmdargs(char **argv, t_args *st)
+{
+	int i;
+	char **arr;
+
+	i = 0;
+	//printf("load_cmdargs: sees %d cmds", st->cmd_count);
+	st->execargs = malloc( sizeof(char **) * (st->cmd_count + 1));
+	if (!st->execargs )
+		err("_load_cmdargs()", st, NULL);
+	while (i < st->cmd_count)
+	{
+		//printf("splitting %s", argv[i + 2]); fflush(stdout);
+		arr = ft_split(argv[i + 2], ' ');
+		st->execargs[i] = arr;
 		if (!st->execargs[i])
 			err("_load_cmdargs()", st, NULL);
+		//printf("loaded%d:", i); fflush(stdout); printarr(st->execargs[i]);
 		i++;
 	}
 	st->execargs[st->cmd_count] = NULL;
+	//printf("howdy"); fflush(stdout);
+	_remove_outer_quotes(st->execargs);
 	//printf("_load_cmdargs:"); fflush(stdout); 
 	//printarrarr(st->execargs);
 	return (SUCCESS);
@@ -104,7 +143,7 @@ static char **_get_paths(char **env, t_args *st)
 }
 
 /* creates execve array argument in struct. Requires PATH. */
-static int	_prep_execargs(int argc, char **argv, char **env, t_args *st)
+static int	_prep_execargs(char **argv, char **env, t_args *st)
 {
 	const char **paths = (const char **)_get_paths(env, st);
 	int status;
@@ -112,7 +151,8 @@ static int	_prep_execargs(int argc, char **argv, char **env, t_args *st)
 
 	if (!paths)
 		err("Could not split PATH", st, NULL);
-	status =_load_cmdargs(argc, argv, st);
+	status =_load_cmdargs(argv, st);
+	//printf(":prep_execargs:loaded cmds"); fflush(stdout);
 	if (status == FAILURE)
 		err("_get_cmdargs()", st, NULL);
 	st->cmdpaths = malloc(sizeof(char *) * (st->cmd_count + 1));
@@ -120,6 +160,7 @@ static int	_prep_execargs(int argc, char **argv, char **env, t_args *st)
 		err("cmdpaths malloc", st, NULL);
 	st->cmdpaths[st->cmd_count] = NULL;
 	i = -1;
+	//printf(":prep_execargs: preloop"); fflush(stdout);
 	while (++i < st->cmd_count) 
 	{
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
@@ -140,12 +181,12 @@ static int	_load_cmd_count(int argc, t_args *st)
 int parse_args(int argc, char **argv, char **env, t_args *st)
 {
 	if (argc < MINARGS)
-		err("Insufficient arguments.", st, NULL);
+		err("Insufficient arguments.", NULL, NULL);
 	_init_struct(st);
 	_load_cmd_count(argc, st);
 	st->path_offset = get_env_path(env);
 	if (st->path_offset == FAILURE)
 		err("Could not find PATH in env", st, NULL);
-	_prep_execargs(argc, argv, env, st);
+	_prep_execargs(argv, env, st);
 	return (SUCCESS);
 }
