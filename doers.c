@@ -1,47 +1,27 @@
 #include "pipex.h"
 
-/* searches **env for "PATH" and returns index */
-int	get_env_path(char **env)
+static void _init_struct(int argc, char **argv, char **env, t_args *st)
 {
-	const char *path = "PATH";
-	char *s;
-	int i;
-	int idx;
-
-	s = (char *)path;
-	i = 0;
-	idx = 0;
-	while (env[idx])
-	{
-		while (env[idx][i] == s[i] && s[i] && env[idx][i])
-			i++;
-		if (s[i] == '\0')
-			return (idx);
-		s = (char *)path;
-		idx++;
-	}
-	return (FAILURE);
-}
-
-static void _init_struct(t_args *st)
-{
-	char **envp = malloc(sizeof(char *) * 2);
-	if (!envp)
-		err("struct init malloc", NULL, NULL);
-	envp[0] = "TMOUT=1";
-	envp[1] = NULL;
-
-	st->argc = 0;
-	st->cmd_count = 0;
-	st->path_offset = 0;
+	st->outfile = "";
+	st->argc = argc;
 	st->cmdpaths = NULL;
 	st->execargs = NULL;
-	st->envp = envp;
 	st->fd = 0;
 	st->fildes[0] = -1;
 	st->fildes[1] = -1;
 	st->fildes2[0] = -1;
 	st->fildes2[1] = -1;
+	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0) 
+		st->heredoc = TRUE;
+	else
+		st->heredoc = FALSE;
+	st->cmd_count = argc - (3 + st->heredoc); // assume t_bool counts as 1
+	if (argc < (MINARGS + (int)st->heredoc))
+		err("Insufficient arguments.", st, NULL);
+	st->outfile = argv[argc - 1];
+	st->path_offset = get_env_path(env);
+	if (st->path_offset == FAILURE)
+		err("Could not find PATH in env", st, NULL);
 }
 
 /* Loads a single absolute command path into struct at index idx if accessible */
@@ -109,8 +89,8 @@ static int	_load_cmdargs(char **argv, t_args *st)
 		err("_load_cmdargs()", st, NULL);
 	while (i < st->cmd_count)
 	{
-		//printf("splitting %s", argv[i + 2]); fflush(stdout);
-		arr = ft_split(argv[i + 2], ' ');
+		printf("splitting %s", argv[i + 2 + (int)st->heredoc]); fflush(stdout);
+		arr = ft_split(argv[i + 2 + (int)st->heredoc], ' ');
 		st->execargs[i] = arr;
 		if (!st->execargs[i])
 			err("_load_cmdargs()", st, NULL);
@@ -125,6 +105,7 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	return (SUCCESS);
 }
 
+/* Parses PATH paths. Called once. */
 static char **_get_paths(char **env, t_args *st)
 {
 	const char *haystack = "PATH=";
@@ -163,30 +144,34 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	//printf(":prep_execargs: preloop"); fflush(stdout);
 	while (++i < st->cmd_count) 
 	{
+		printf("Loading: %s", st->execargs[i][0]); fflush(stdout);
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
 		if (status == FAILURE)
 			err("_get_cmdpath()", st, NULL);
 	}
 	free(paths);
-	return (FAILURE);
-}
-
-static int	_load_cmd_count(int argc, t_args *st)
-{
-	st->cmd_count = argc - 2;
-	return (SUCCESS);
+	return (EXIT_FAILURE);
 }
 
 /* returns offset for PATH, inits struct, loads execve args  */
 int parse_args(int argc, char **argv, char **env, t_args *st)
 {
-	if (argc < MINARGS)
-		err("Insufficient arguments.", NULL, NULL);
-	_init_struct(st);
-	_load_cmd_count(argc, st);
-	st->path_offset = get_env_path(env);
-	if (st->path_offset == FAILURE)
-		err("Could not find PATH in env", st, NULL);
+	_init_struct(argc, argv, env, st);
+	//_load_cmd_count(argc, argv, st);
 	_prep_execargs(argv, env, st);
 	return (SUCCESS);
 }
+/* 
+static int	_load_cmd_count(int argc, char **argv, t_args *st)
+{
+	if (!st->heredoc)
+		st->cmd_count = argc - 3;
+	else
+	{
+		st->cmd_count = argc - 4;
+		if (argc < MINARGS + 1)
+			err("Insufficient arguments.", st, NULL);
+	}
+	return (EXIT_SUCCESS);
+}*/
+
