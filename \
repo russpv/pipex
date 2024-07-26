@@ -83,7 +83,7 @@ char	*get_line(int fd)
 	{
 		bytes = read(fd, buf + i, 1);
 		if (bytes == -1)
-			err("get line read()", NULL, NULL, 0);
+			err("get next line read()", NULL, NULL);
 		if (bytes == 0 || buf[i] == '\0' || buf[i] == '\n')
 			break ;
 		i++;

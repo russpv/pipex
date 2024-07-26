@@ -1,6 +1,8 @@
 #ifndef PIPEX
 # define PIPEX
 
+#include "get_next_line.h"
+#include <errno.h>
 #include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,7 +16,7 @@
 #define MINARGS 5
 #define PATHBUF 1024
 #define BUFSZ 1024
-
+#define LIMIT 10000
 typedef struct s_args {
 	int argc;
 	int cmd_count;
@@ -35,10 +37,10 @@ typedef struct s_args {
 int	get_env_path(char **env);
 int	parse_args(int argc, char **argv, char **env, t_args *st);
 void	cleanup(t_args *st);
-void	err(const char *msg, t_args *st, char *str);
+void	err(const char *msg, t_args *st, char *str, int ern);
 void	printarr(char **arr);
 void	printarrarr(char ***arr);
 
 /* Utils.c */
-char	*get_next_line(int fd);
+char	*get_line(int fd);
 #endif

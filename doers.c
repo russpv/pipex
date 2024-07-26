@@ -17,11 +17,11 @@ static void _init_struct(int argc, char **argv, char **env, t_args *st)
 		st->heredoc = FALSE;
 	st->cmd_count = argc - (3 + st->heredoc); // assume t_bool counts as 1
 	if (argc < (MINARGS + (int)st->heredoc))
-		err("Insufficient arguments.", st, NULL);
+		err("Insufficient arguments.", st, NULL, EINVAL);
 	st->outfile = argv[argc - 1];
 	st->path_offset = get_env_path(env);
 	if (st->path_offset == FAILURE)
-		err("Could not find PATH in env", st, NULL);
+		err("Could not find PATH in env", st, NULL, 0);
 }
 
 /* Loads a single absolute command path into struct at index idx if accessible */
@@ -40,13 +40,17 @@ static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 		if (access((const char *)fullpath, X_OK) == 0)
 		{
 			st->cmdpaths[idx] = ft_strdup((const char*)fullpath);
+			printf("Loaded path:%s", st->cmdpaths[idx]); fflush(stdout);
 			if (!st->cmdpaths[idx])
-				err("Command not found.", st, NULL);
-			return (SUCCESS);
+				err("_load_cmdpath: strdup() failure", st, NULL, 0);
+			return (EXIT_SUCCESS);
 		}
 		i++;
 	}
-	return (FAILURE);
+	perror("command not found.");
+	printf("loading NULL at idx:%d",idx); fflush(stdout);
+	st->cmdpaths[idx] = NULL;
+	return (EXIT_SUCCESS);
 }
 
 static void	_remove_outer_quotes(char ***arr)
@@ -86,14 +90,14 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	//printf("load_cmdargs: sees %d cmds", st->cmd_count);
 	st->execargs = malloc( sizeof(char **) * (st->cmd_count + 1));
 	if (!st->execargs )
-		err("_load_cmdargs()", st, NULL);
+		err("_load_cmdargs()", st, NULL, 0);
 	while (i < st->cmd_count)
 	{
-		printf("splitting %s", argv[i + 2 + (int)st->heredoc]); fflush(stdout);
+		//printf("splitting %s", argv[i + 2 + (int)st->heredoc]); fflush(stdout);
 		arr = ft_split(argv[i + 2 + (int)st->heredoc], ' ');
 		st->execargs[i] = arr;
 		if (!st->execargs[i])
-			err("_load_cmdargs()", st, NULL);
+			err("_load_cmdargs()", st, NULL, 0);
 		//printf("loaded%d:", i); fflush(stdout); printarr(st->execargs[i]);
 		i++;
 	}
@@ -102,7 +106,7 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	_remove_outer_quotes(st->execargs);
 	//printf("_load_cmdargs:"); fflush(stdout); 
 	//printarrarr(st->execargs);
-	return (SUCCESS);
+	return (EXIT_SUCCESS);
 }
 
 /* Parses PATH paths. Called once. */
@@ -131,47 +135,36 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	int i;
 
 	if (!paths)
-		err("Could not split PATH", st, NULL);
+		err("Could not split PATH", st, NULL, 0);
 	status =_load_cmdargs(argv, st);
 	//printf(":prep_execargs:loaded cmds"); fflush(stdout);
 	if (status == FAILURE)
-		err("_get_cmdargs()", st, NULL);
+		err("_get_cmdargs()", st, NULL, 0);
 	st->cmdpaths = malloc(sizeof(char *) * (st->cmd_count + 1));
 	if (!st->cmdpaths)
-		err("cmdpaths malloc", st, NULL);
+		err("cmdpaths malloc", st, NULL, 0);
 	st->cmdpaths[st->cmd_count] = NULL;
 	i = -1;
 	//printf(":prep_execargs: preloop"); fflush(stdout);
 	while (++i < st->cmd_count) 
 	{
-		printf("Loading: %s", st->execargs[i][0]); fflush(stdout);
+		//printf("Loading: %s", st->execargs[i][0]); fflush(stdout);
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
-		if (status == FAILURE)
-			err("_get_cmdpath()", st, NULL);
+		if (status == EXIT_FAILURE) //TODO not needed now
+			err("_get_cmdpath()", st, NULL, 0);
 	}
 	free(paths);
-	return (EXIT_FAILURE);
+	return (EXIT_SUCCESS);
 }
 
 /* returns offset for PATH, inits struct, loads execve args  */
 int parse_args(int argc, char **argv, char **env, t_args *st)
 {
+	if (argc < MINARGS)
+		err("Insufficient arguments.", NULL, NULL, EINVAL);
 	_init_struct(argc, argv, env, st);
 	//_load_cmd_count(argc, argv, st);
 	_prep_execargs(argv, env, st);
-	return (SUCCESS);
-}
-/* 
-static int	_load_cmd_count(int argc, char **argv, t_args *st)
-{
-	if (!st->heredoc)
-		st->cmd_count = argc - 3;
-	else
-	{
-		st->cmd_count = argc - 4;
-		if (argc < MINARGS + 1)
-			err("Insufficient arguments.", st, NULL);
-	}
 	return (EXIT_SUCCESS);
-}*/
+}
 

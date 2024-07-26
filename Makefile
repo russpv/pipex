@@ -20,7 +20,25 @@ ft_strchr.c \
 ft_isprint.c \
 ft_strncmp.c
 
-BSOURCES =	pipex.c \
+BSOURCES =	 \
+pipex.c \
+doers.c \
+utils.c \
+ft_memset.c \
+ft_memcpy.c \
+ft_memmove.c \
+ft_strlen.c \
+ft_strlcat.c \
+ft_strdup.c \
+ft_strjoin.c \
+ft_substr.c \
+ft_split.c \
+ft_strnlen_extra.c \
+ft_putchar_fd.c \
+ft_putstr_fd.c \
+ft_strchr.c \
+ft_isprint.c \
+ft_strncmp.c
 
 YELLOW = \033[33m
 GREEN = \033[32m
@@ -46,11 +64,12 @@ $(NAME): $(OBJECTS)
 	@echo "$(YELLOW)Created: $(words $(OBJECTS) ) object file(s)$(RESET)"
 	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
 
-#bonus: .bonus_made
+bonus: .bonus_made
 
-.bonus_made: $(OBJECTS) $(BOBJECTS)
+.bonus_made: $(BOBJECTS)
 	@echo "Creating $(NAME) archive..."
-	$(AR) -rvcs $(NAME) $?
+	$(CC) $^ -o $@ $(CFLAGS)
+	chmod +x $@
 	-@touch .bonus_made
 	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
 	@echo "$(YELLOW)Created: $(words $(OBJECTS) $(BOBJECTS)) object file(s)$(RESET)"

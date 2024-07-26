@@ -1,7 +1,4 @@
 #include "pipex.h"
-#include <unistd.h>
-#include <sys/wait.h>
-#include <errno.h>
 
 /* PIPEX
  * Expects "[infile] [command] | ... | [command] > [outfile]" args
@@ -23,18 +20,21 @@ static void    _writeout(char *outname, int infd)
     int bytes_read;
     int bytes_written;
     int buffer[BUFSZ];
+	int total_bytes_read;
 
     ft_memset(buffer, 0, BUFSZ);
     int outfd = open(outname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (outfd == -1)
-	{
-        err("open", NULL, NULL);
-	}
-	while ((bytes_read = read(infd, buffer, BUFSZ)) > 0)
+		err("open", NULL, NULL, 0);
+	bytes_read = 1;
+	total_bytes_read = 0;
+	while (bytes_read > 0 && total_bytes_read < LIMIT)
     {
+		bytes_read = read(infd, buffer, BUFSZ);
         bytes_written = write(outfd, buffer, bytes_read);
         if (bytes_written != bytes_read)
-            err("writeout", NULL, NULL);
+            err("writeout", NULL, NULL, 0);
+		total_bytes_read += bytes_read;
     }
 }
 
@@ -49,48 +49,52 @@ static int _redirect(int *to, char *topath, int from)
     
 	if (!to && (topath != NULL && *topath))
 	{
-		printf("|redirect:%s_from_%d|", topath, from); fflush(stdout);
-		if (from == STDIN_FILENO)
+		//printf("|redirect:%s_from_%d|", topath, from); fflush(stdout);
+		if (from == STDIN_FILENO && access(topath, F_OK) == -1) // bad cmd last round
+		{
+			printf("|devnull|"); fflush(stdout);
+			fd = open("/dev/null", O_RDONLY);
+		}
+		else if (from == STDIN_FILENO)
         	fd = open(topath, O_RDONLY | O_CREAT, 0644);
 		else if (from == STDOUT_FILENO)
 			fd = open(topath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		else
 			fd = -1 ;
 		if (fd < 0)
-            err("redirect() open", NULL, NULL);
+            err("redirect() open", NULL, NULL, 0);
 	}
     else
 	{
         fd = *to;
-		printf("|redirect:%d_to_%d|", fd, from); fflush(stdout);
+		//printf("|redirect:%d_to_%d|", fd, from); fflush(stdout);
 	}
     if (dup2(fd, from) == -1)
-        err("dup2 stdin", NULL, NULL);
+        err("dup2 stdin", NULL, NULL, 0);
     close(fd);
     return (from);
 }
 
-static void	heredoc(char *lim)
+static void	_heredoc(char *lim)
 {
 	int fildes[2];
 	pid_t p;
 	char *userinput;
 	
-	printf("We in heredoc|"); fflush(stdout);
+	//printf("We in heredoc|"); fflush(stdout);
 	userinput = NULL;
 	if (pipe(fildes) < 0)
-		err("heredoc pipe()", NULL, NULL);
+		err("heredoc pipe()", NULL, NULL, 0);
 	p = fork();
 	if (p == -1)
-		err("heredoc fork()", NULL, NULL);
+		err("heredoc fork()", NULL, NULL, 0);
 	if (0 == p)
 	{
-		close(fildes[0]); //read end
+		close(fildes[0]);
 		while (1)
 		{
-			printf("> ");
-			userinput = get_next_line(STDIN_FILENO);
-			printf(">%s", userinput); fflush(stdout);
+			printf("> "); fflush(stdout);
+			userinput = get_line(STDIN_FILENO);
 			if (ft_strncmp(userinput, lim, ft_strlen(lim)) == 0)
 			{
 				free(userinput);
@@ -108,6 +112,21 @@ static void	heredoc(char *lim)
 	}
 }
 
+/* Interpret waitpid() exit status (signals ignored here) */
+static inline int	_get_exit_status(int status)
+{
+	int exit_status;
+	int signal_number;
+
+	exit_status = 0;
+	signal_number = 0;
+	if (WIFEXITED(status))
+		exit_status = WEXITSTATUS(status);
+    else if (WIFSIGNALED(status))
+		signal_number = WTERMSIG(status);
+    return (exit_status);
+}
+	
 int main(int argc, char *argv[], char *env[])
 {
 	t_args st;
@@ -119,41 +138,47 @@ int main(int argc, char *argv[], char *env[])
     i = -1;
 	while (++i < st.cmd_count) {
 		if (pipe(st.fildes) < 0)
-			err("pipe", &st, NULL);
+			err("pipe", &st, NULL, 0);
 		p = fork();
 		if (0 == p)
 		{ 
-			printf("%d:child:", i + 1); fflush(stdout); 
+			//printf("|%d:child:", i + 1); fflush(stdout); 
 			close(st.fildes[0]);
             if (i == 0 && !st.heredoc) // read from input file on first command
                 _redirect(NULL, argv[1], STDIN_FILENO);
 			else if (i == 0 && st.heredoc)
-				heredoc(argv[2]);
+				_heredoc(argv[2]);
             else 
                 _redirect(NULL, "temp", STDIN_FILENO); 
-            printf("|redirected stdin. loading %s|", argv[i + 2 + (int)st.heredoc]); fflush(stdout);
-            if (i != st.cmd_count - 1) // write to pipe if not last command
-                _redirect(&st.fildes[1], NULL, STDOUT_FILENO);
+            //printf("|redirected stdin. loading cmd %s|", argv[i + 2 + (int)st.heredoc]); fflush(stdout);
+            if (i + 1 < st.cmd_count) // write to pipe if not last command
+                _redirect(&st.fildes[1], NULL, STDOUT_FILENO); 
 			else
 				_redirect(NULL, st.outfile, STDOUT_FILENO);
-			
-			if (execve(st.cmdpaths[i], (char *const *)st.execargs[i], NULL) == -1)
-				err("execve sucked", &st, NULL);
+			if (st.cmdpaths[i] == NULL)
+					exit(EXIT_FAILURE);
+			else
+				if (execve(st.cmdpaths[i], (char *const *)st.execargs[i], env) == -1)
+					err("execve()", &st, NULL, 0);
 		}
 		else if (p > 0) //fildes[0]=3; fildes[1]=4; "temp"=5; 
 		{
 			waitpid(p, &status, 0);
-			printf("%d:parent:", i + 1); fflush(stdout);
+			//printf("%d:parent:", i + 1); fflush(stdout);
 			close(st.fildes[1]);
-            if (i != st.cmd_count - 1) // write to tempfile if not last command
+			printf("|exitstat:%d|",_get_exit_status(status)); fflush(stdout);
+            if (i + 1 < st.cmd_count && _get_exit_status(status) == 0)
+			//{
 				_writeout("temp", st.fildes[0]);
-            close(st.fildes[0]);
-			printf("\n"); fflush(stdout);
+				//printf("cmds:%d|", st.cmd_count); fflush(stdout);
+				//int temp = open("temp", O_RDONLY);
+				//printf("wroteout:%s\n", get_line(temp)); fflush(stdout); close(temp); }
+			close(st.fildes[0]);
 		}
 		else
-            err("fork", &st, NULL);
+            err("fork", &st, NULL, 0);
 	}
     unlink("temp"); 
-	return (EXIT_SUCCESS);
+	return (_get_exit_status(status));
 }
 
