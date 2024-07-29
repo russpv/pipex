@@ -15,6 +15,7 @@
 // how to create a pipe with PIPE?
 
 /* Writes infd to fresh outname file */
+/*
 static void    _writeout(char *outname, int infd)
 {
     int bytes_read;
@@ -37,7 +38,7 @@ static void    _writeout(char *outname, int infd)
 		total_bytes_read += bytes_read;
     }
 }
-
+*/
 /* Wraps open() and dup2() */
 /* 1. Opens input file ror reading
  * 2. Opens output file for writing
@@ -70,7 +71,7 @@ static int _redirect(int *to, char *topath, int from)
 		//printf("|redirect:%d_to_%d|", fd, from); fflush(stdout);
 	}
     if (dup2(fd, from) == -1)
-        err("dup2 stdin", NULL, NULL, 0);
+        err("dup2", NULL, NULL, 0);
     close(fd);
     return (from);
 }
@@ -126,7 +127,36 @@ static inline int	_get_exit_status(int status)
 		signal_number = WTERMSIG(status);
     return (exit_status);
 }
-	
+
+// Dynamically allocates pipe fds
+void	create_pipes(t_args *st)
+{
+	int i;
+
+	i = 0;
+	st->fildes = malloc(st->cmd_count * sizeof(int *));
+	if (!st->fildes)
+		err("malloc", st, NULL, 0);
+	while (i < st->cmd_count)
+	{
+		st->fildes[i] = malloc(3 * sizeof(int));
+		if (!st->fildes[i])
+			err("malloc", st, NULL, 0);
+		st->fildes[2] = NULL;
+		if (pipe(st->fildes[i]) < 0)
+			err("pipe", st, NULL, 0);
+		i++;
+	}
+}
+
+
+// TODO refactor to dynamically create pipes for each proc pair
+// remove temp file writeout
+// allows procs to run in parallel with single fork loop
+// children talk directly; parents just close ends
+// INFILE || CMD 1  ||  CMD 2  ||  OUTFILE
+// 			parent1		parent2
+// 			child1	PIPE1  child2 ...
 int main(int argc, char *argv[], char *env[])
 {
 	t_args st;
@@ -135,45 +165,58 @@ int main(int argc, char *argv[], char *env[])
 	int status; 
 
 	parse_args(argc, argv, env, &st);
+	create_pipes(&st);
     i = -1;
 	while (++i < st.cmd_count) {
-		if (pipe(st.fildes) < 0)
-			err("pipe", &st, NULL, 0);
 		p = fork();
 		if (0 == p)
 		{ 
-			//printf("|%d:child:", i + 1); fflush(stdout); 
-			close(st.fildes[0]);
+			//printf("\n|%d:child:", i + 1); fflush(stdout); 
+			close(st.fildes[i][0]);
             if (i == 0 && !st.heredoc) // read from input file on first command
                 _redirect(NULL, argv[1], STDIN_FILENO);
 			else if (i == 0 && st.heredoc)
 				_heredoc(argv[2]);
-            else 
-                _redirect(NULL, "temp", STDIN_FILENO); 
+            else
+			{
+				//printf("|redirecting stdin to fildes [%d]", i - 1);	
+                _redirect(&st.fildes[i - 1][0], NULL, STDIN_FILENO); // read from last child
+			}
             //printf("|redirected stdin. loading cmd %s|", argv[i + 2 + (int)st.heredoc]); fflush(stdout);
             if (i + 1 < st.cmd_count) // write to pipe if not last command
-                _redirect(&st.fildes[1], NULL, STDOUT_FILENO); 
+			{
+				//printf("|redirect stdout to write to %d|", i);
+				_redirect(&st.fildes[i][1], NULL, STDOUT_FILENO);
+			}	
 			else
+			{
+				//printf("|redirect stdout to write to outfile|");
 				_redirect(NULL, st.outfile, STDOUT_FILENO);
+			}
 			if (st.cmdpaths[i] == NULL)
-					exit(EXIT_FAILURE);
+				exit(EXIT_FAILURE);
 			else
 				if (execve(st.cmdpaths[i], (char *const *)st.execargs[i], env) == -1)
 					err("execve()", &st, NULL, 0);
 		}
 		else if (p > 0) //fildes[0]=3; fildes[1]=4; "temp"=5; 
 		{
-			waitpid(p, &status, 0);
-			//printf("%d:parent:", i + 1); fflush(stdout);
-			close(st.fildes[1]);
-			printf("|exitstat:%d|",_get_exit_status(status)); fflush(stdout);
-            if (i + 1 < st.cmd_count && _get_exit_status(status) == 0)
+			if (i  + 1< st.cmd_count )
+				waitpid(p, &status, WNOHANG); //let keep running
+			else
+				waitpid(p, &status, 0);
+			//printf("\n%d:parent:", i + 1); fflush(stdout);
+			close(st.fildes[i][1]);
+			//printf("|exitstat:%d|",_get_exit_status(status)); fflush(stdout);
+            //if (i + 1 < st.cmd_count && _get_exit_status(status) == 0)
 			//{
-				_writeout("temp", st.fildes[0]);
+				//_writeout("temp", st.fildes[i][0]);
 				//printf("cmds:%d|", st.cmd_count); fflush(stdout);
 				//int temp = open("temp", O_RDONLY);
 				//printf("wroteout:%s\n", get_line(temp)); fflush(stdout); close(temp); }
-			close(st.fildes[0]);
+			//printf("\n"); fflush(stdout);
+			if (i != 0)
+				close(st.fildes[i - 1][0]);
 		}
 		else
             err("fork", &st, NULL, 0);

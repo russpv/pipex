@@ -7,10 +7,7 @@ static void _init_struct(int argc, char **argv, char **env, t_args *st)
 	st->cmdpaths = NULL;
 	st->execargs = NULL;
 	st->fd = 0;
-	st->fildes[0] = -1;
-	st->fildes[1] = -1;
-	st->fildes2[0] = -1;
-	st->fildes2[1] = -1;
+	st->fildes = NULL;
 	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0) 
 		st->heredoc = TRUE;
 	else
@@ -48,7 +45,7 @@ static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 		i++;
 	}
 	perror("command not found.");
-	printf("loading NULL at idx:%d",idx); fflush(stdout);
+	//printf("loading NULL at idx:%d",idx); fflush(stdout);
 	st->cmdpaths[idx] = NULL;
 	return (EXIT_SUCCESS);
 }
@@ -58,7 +55,10 @@ static void	_remove_outer_quotes(char ***arr)
 	int i;
 	int j;
 	size_t len;
+	char ch;
 
+	printf("removing quotes|"); fflush(stdout);
+	ch = 0;
 	i = 0;
 	while (arr && arr[i])
 	{
@@ -66,27 +66,46 @@ static void	_remove_outer_quotes(char ***arr)
 		while (arr[i][j])
 		{
 			len = ft_strlen(arr[i][j]);
-			if (len > 0 && arr[i][j][0] == '\'')
+			if (arr[i][j][0] == '\'')
+				ch = '\'';
+			else
+				ch = '\"';
+			if (len > 0 && (arr[i][j][0] == ch))
 			{
 				ft_memmove((void *)arr[i][j], arr[i][j] + 1, len);
 				--len;
 			}
-			if (len > 0 && arr[i][j][len - 1] == '\'')
+			if (len > 0 && (arr[i][j][len - 1] == ch))
 				arr[i][j][len - 1] = 0;
 			j++;
 		}
 		i++;
 	}
+	printf("removed quotes|"); fflush(stdout);
 }
 
+/* Finds internal quotation mark in argv */
+static void	_get_split_delim(const char *arg, char *sub)
+{
+	if (ft_strchr(arg, '\"'))
+		sub[1] = '\"';
+	else if (ft_strchr(arg, '\''))
+		sub[1] = '\'';
+	else
+		sub[1] = 0;
+	printf("delim_%s_ in %s|", sub, arg); fflush(stdout);
+}
 
 /* splits argv for use in execve() */
 static int	_load_cmdargs(char **argv, t_args *st)
 {
 	int i;
 	char **arr;
+	char sub[3];
 
 	i = 0;
+	sub[0] = ' ';
+	sub[2] = 0;
 	//printf("load_cmdargs: sees %d cmds", st->cmd_count);
 	st->execargs = malloc( sizeof(char **) * (st->cmd_count + 1));
 	if (!st->execargs )
@@ -94,7 +113,9 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	while (i < st->cmd_count)
 	{
 		//printf("splitting %s", argv[i + 2 + (int)st->heredoc]); fflush(stdout);
-		arr = ft_split(argv[i + 2 + (int)st->heredoc], ' ');
+		_get_split_delim(argv[i + 2 + (int)st->heredoc], sub);
+		printf("delim:_%s_|", sub); fflush(stdout);
+		arr = ft_splitsub(argv[i + 2 + (int)st->heredoc], sub);
 		st->execargs[i] = arr;
 		if (!st->execargs[i])
 			err("_load_cmdargs()", st, NULL, 0);
@@ -104,8 +125,9 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	st->execargs[st->cmd_count] = NULL;
 	//printf("howdy"); fflush(stdout);
 	_remove_outer_quotes(st->execargs);
-	//printf("_load_cmdargs:"); fflush(stdout); 
-	//printarrarr(st->execargs);
+	printf("_load_cmdargs:"); fflush(stdout); 
+	printarrarr(st->execargs);
+	printf("_"); fflush(stdout);
 	return (EXIT_SUCCESS);
 }
 
@@ -148,7 +170,7 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	//printf(":prep_execargs: preloop"); fflush(stdout);
 	while (++i < st->cmd_count) 
 	{
-		//printf("Loading: %s", st->execargs[i][0]); fflush(stdout);
+		printf("Loading: %s_", st->execargs[i][0]); fflush(stdout);
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
 		if (status == EXIT_FAILURE) //TODO not needed now
 			err("_get_cmdpath()", st, NULL, 0);

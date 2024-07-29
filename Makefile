@@ -18,7 +18,10 @@ ft_putchar_fd.c \
 ft_putstr_fd.c \
 ft_strchr.c \
 ft_isprint.c \
-ft_strncmp.c
+ft_strncmp.c \
+ft_strnstr.c \
+ft_strtrim.c \
+ft_splitsub.c 
 
 BSOURCES =	 \
 pipex.c \
@@ -38,7 +41,10 @@ ft_putchar_fd.c \
 ft_putstr_fd.c \
 ft_strchr.c \
 ft_isprint.c \
-ft_strncmp.c
+ft_strncmp.c \
+ft_strnstr.c \
+ft_strtrim.c \
+ft_splitsub.c
 
 YELLOW = \033[33m
 GREEN = \033[32m

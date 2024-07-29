@@ -17,17 +17,18 @@
 #define PATHBUF 1024
 #define BUFSZ 1024
 #define LIMIT 10000
+
 typedef struct s_args {
 	int argc;
+	char **envp;
+	
 	int cmd_count;
 	int path_offset;
 	char **cmdpaths;
 	char ***execargs;
-	char **envp;
 
 	int fd;
-	int fildes[2];
-	int fildes2[2];
+	int **fildes;
 
 	char *outfile;
 
@@ -43,4 +44,7 @@ void	printarrarr(char ***arr);
 
 /* Utils.c */
 char	*get_line(int fd);
+
+/* Lib */
+char	**ft_splitsub(const char *s, const char *sub);
 #endif
