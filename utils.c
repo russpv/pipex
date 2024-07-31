@@ -48,23 +48,6 @@ void	arg_error(void)
 	exit(EXIT_SUCCESS);
 }
 
-void    printarr(char **arr)
-{
-    while (arr && *arr) {
-        printf("%s\n", *arr);
-        arr++;
-    } fflush(stdout);
-}
-
-void	printarrarr(char ***arr)
-{
-	while (arr && *arr)
-	{
-		printarr(*arr);
-		arr++;
-	} 
-}
-
 /* simple fixed buffer version */
 char	*get_line(int fd)
 {

@@ -1,9 +1,8 @@
 #ifndef PIPEX
 # define PIPEX
 
-#include "get_next_line.h"
+#include "libft/mylib.h"
 #include <errno.h>
-#include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -47,4 +46,8 @@ char	*get_line(int fd);
 
 /* Lib */
 char	**ft_splitsub(const char *s, const char *sub);
+
+/* String.c */
+int	process_string(char **arr);
+void	remove_outer_quotes(char ***arr);
 #endif

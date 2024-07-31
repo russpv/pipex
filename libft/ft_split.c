@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_splitsub.c                                      :+:      :+:    :+:   */
+/*   ft_split.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:11:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/07/30 19:14:56 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/05/27 20:11:04 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "mylib.h"
 
 /* SPLIT
 ** Returns new C-strings split by c or NULL (malloc)
@@ -37,17 +37,19 @@ static inline t_bool	is_print(char const *p)
 }
 
 /* Returns non-empty string count in C-string p*/
-static inline int	get_word_count(char const *p, char const *sub)
+static inline int	get_word_count(char const *p, char ch)
 {
 	const char		*temp;
 	int				count;
+	unsigned char	c;
 
 	count = 0;
-	if (!*sub && is_print(p))
+	c = (unsigned char)ch;
+	if (ch == 0 && is_print(p))
 		return (1);
 	while (*p)
 	{
-		temp = ft_strnstr(p, sub, -1);
+		temp = ft_strchr(p, c);
 		if (!temp)
 		{
 			if (is_print(p))
@@ -72,23 +74,17 @@ static inline void	*do_ops(char const *s, char ***arr, char const *temp,
 	}
 	(*arr)[i][temp - s] = 0;
 	ft_memmove((*arr)[i], s, temp - s);
-	(*arr)[i] = ft_strtrim((*arr)[i], " ");
-	if (!(*arr)[i])
-	{
-		arr_free((*arr), i);
-		return (NULL);
-	}
 	return ((*arr)[i]);
 }
 
-char	**ft_splitsub(char const *s, char const *sub)
+char	**ft_split(char const *s, char c)
 {
 	char			**arr;
 	char const		*temp;
 	int				count;
 	unsigned int	i;
 
-	count = get_word_count(s, sub);
+	count = get_word_count(s, c);
 	arr = malloc(sizeof(char *) * (count + 1));
 	if (!arr)
 		return (NULL);
@@ -96,7 +92,7 @@ char	**ft_splitsub(char const *s, char const *sub)
 	i = 0;
 	while (*s && count)
 	{
-		temp = ft_strnstr(s, sub, -1);
+		temp = ft_strchr(s, c);
 		if (!temp)
 			temp = ft_strchr(s, 0);
 		if (temp - s > 0)
