@@ -1,6 +1,6 @@
 #include "pipex.h"
 
-static void _init_struct(int argc, char **argv, char **env, t_args *st)
+static void	_init_struct(int argc, char **argv, char **env, t_args *st)
 {
 	st->outfile = "";
 	st->argc = argc;
@@ -8,7 +8,7 @@ static void _init_struct(int argc, char **argv, char **env, t_args *st)
 	st->execargs = NULL;
 	st->fd = 0;
 	st->fildes = NULL;
-	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0) 
+	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0)
 		st->heredoc = TRUE;
 	else
 		st->heredoc = FALSE;
@@ -29,11 +29,14 @@ static int	permission_err(char *path, t_args *st, int idx)
 	ft_printf("permission denied: %s", path);
 	return (EXIT_SUCCESS);
 }
-/* Loads a single absolute command path into struct at index idx if accessible */
+
+/* Loads a single absolute command path into 
+** struct at index idx if accessible 
+*/
 static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 {
-	int i;
-	char fullpath[PATHBUF];
+	int		i;
+	char	fullpath[PATHBUF];
 
 	i = -1;
 	while (paths[++i] && ft_strncmp(cmd, ".", 1) && !ft_strchr(cmd, '/'))
@@ -42,18 +45,20 @@ static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 		ft_memcpy(fullpath, paths[i], ft_strlen(paths[i]));
 		if (fullpath[ft_strlen(fullpath) - 1] != '/')
 			ft_strlcat((char *)fullpath, "/", ft_strlen(fullpath) + 2);
-	    ft_strlcat((char *)fullpath, cmd, ft_strlen(fullpath) + ft_strlen(cmd) + 1);
+		ft_strlcat((char *)fullpath, cmd, ft_strlen(fullpath) + \
+		ft_strlen(cmd) + 1);
 		if (access((const char *)fullpath, F_OK) == 0)
 		{
 			if (access((const char *)fullpath, X_OK != 0))
 				return (permission_err(fullpath, st, idx));
-			st->cmdpaths[idx] = ft_strdup((const char*)fullpath);
+			st->cmdpaths[idx] = ft_strdup((const char *)fullpath);
 			if (!st->cmdpaths[idx])
 				err("_load_cmdpath: strdup() failure", st, NULL, 0);
 			return (EXIT_SUCCESS);
 		}
 	}
-	if (access((const char *)cmd, F_OK) == 0 && access((const char*)cmd, X_OK) != 0)
+	if (access((const char *)cmd, F_OK) == 0 && \
+	access((const char*)cmd, X_OK) != 0)
 		return (permission_err(cmd, st, idx));
 	if (access((const char *)cmd, X_OK) == 0)
 	{
