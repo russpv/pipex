@@ -1,28 +1,27 @@
 #include "pipex.h"
 
-
-void    err(const char *msg, t_args *st, char *str, int ern)
+void	err(const char *msg, t_args *st, char *str, int ern)
 {
 	if (ern != 0)
 		errno = ern;
-    perror(msg);
+	perror(msg);
 	if (st)
 		cleanup(st);
 	if (str)
-		free (str);
-    exit(EXIT_FAILURE);
+		free(str);
+	exit(EXIT_FAILURE);
 }
 
-static void _free_arr(char **arr)
+static void	_free_arr(char **arr)
 {
 	while (*arr)
 	{
 		free(*arr);
 		arr++;
-	}	
+	}
 }
 
-static void _free_arrarr(char ***arrarr)
+static void	_free_arrarr(char ***arrarr)
 {
 	while (*arrarr)
 	{
@@ -44,17 +43,18 @@ void	arg_error(void)
 {
 	ft_putstr_fd("\033[31mError: Bad argument\n\e[0m", 2);
 	ft_putstr_fd("Ex: ./pipex <file1> <cmd1> <cmd2> <...> <file2>\n", 1);
-	ft_putstr_fd("    ./pipex \"here_doc\" <LIMITER> <cmd> <cmd1> <...> <file>\n", 1);
+	ft_putstr_fd("    ./pipex \"here_doc\" <LIMITER> <cmd> <cmd1> <...> <file>\n",
+		1);
 	exit(EXIT_SUCCESS);
 }
 
 /* simple fixed buffer version */
 char	*get_line(int fd)
 {
-	char *buf;
-	char *p;
-	int i;
-	int bytes;
+	char	*buf;
+	char	*p;
+	int		i;
+	int		bytes;
 
 	buf = malloc(sizeof(char) * BUFSZ);
 	if (!buf)
@@ -78,10 +78,10 @@ char	*get_line(int fd)
 /* searches **env for "PATH" and returns index */
 int	get_env_path(char **env)
 {
-	const char *path = "PATH"; 
-	char *s;
-	int i;
-	int idx;
+	const char	*path = "PATH";
+	char		*s;
+	int			i;
+	int			idx;
 
 	s = (char *)path;
 	i = 0;

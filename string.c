@@ -5,10 +5,10 @@
 /* Caller must free array */
 int	process_string(char **args)
 {
-	char **arr;
-	char *src;
-	char *dest;
-	char *buf;
+	char	**arr;
+	char	*src;
+	char	*dest;
+	char	*buf;
 
 	if (!args)
 		return (EXIT_FAILURE);
@@ -39,12 +39,12 @@ int	process_string(char **args)
 
 void	remove_outer_quotes(char ***arr)
 {
-	int i;
-	int j;
-	size_t len;
-	char ch;
+	int		i;
+	int		j;
+	size_t	len;
+	char	ch;
 
-	//printf("removing quotes|"); fflush(stdout);
+	// printf("removing quotes|"); fflush(stdout);
 	ch = 0;
 	i = 0;
 	while (arr && arr[i])
@@ -68,6 +68,5 @@ void	remove_outer_quotes(char ***arr)
 		}
 		i++;
 	}
-	//ft_printf("removed quotes|");
+	// ft_printf("removed quotes|");
 }
-
