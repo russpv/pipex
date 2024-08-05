@@ -1,7 +1,7 @@
 NAME = pipex
 OUTPUT = executable
 
-SOURCES = pipex.c doers.c utils.c string.c ft_splitsub.c 
+SOURCES = pipex.c doers.c utils.c utils2.c utils3.c string.c ft_splitsub.c 
           
 # ft_memset.c ft_memcpy.c ft_memmove.c ft_strlen.c \
           ft_strlcat.c ft_strdup.c ft_strjoin.c ft_substr.c \
