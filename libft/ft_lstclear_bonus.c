@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* LSTCLEAR
 ** Deletes all subsequent nodes and current node

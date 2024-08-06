@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* PRINTF
  * cspdiuxX% flags handled

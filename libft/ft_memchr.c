@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* MEMCHR
 ** Returns ptr to c if found, else NULL

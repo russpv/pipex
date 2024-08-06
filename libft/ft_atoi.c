@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* ATOI
 ** Returns int value of byte string.

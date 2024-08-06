@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 17:11:58 by rpeavey           #+#    #+#             */
+/*   Updated: 2024/08/06 19:00:49 by rpeavey          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "pipex.h"
 
 /* PIPEX
@@ -46,6 +58,7 @@ static void	_heredoc(char *eof)
 	}
 }
 
+/* Each child reads from the prior pipe and writes to next pipe */
 static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
 	close(st->fildes[i][0]);
@@ -67,6 +80,7 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 	return (SUCCESS);
 }
 
+/* Each parent closes the next write pipe, and the prior read pipe */
 static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 {
 	if (i + 1 < st->cmd_count)
@@ -78,6 +92,7 @@ static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 		close(st->fildes[i - 1][0]);
 }
 
+/* This scheme achieves child to child communication */
 int	main(int argc, char *argv[], char *env[])
 {
 	t_args	st;

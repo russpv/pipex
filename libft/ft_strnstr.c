@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* STRNSTR
 ** Returns first occurrence of substring within n

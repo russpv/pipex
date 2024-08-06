@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* STRCPY 
 ** This copies src into dest, w/ null, and returns pointer

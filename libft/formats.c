@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* NOTE: va_args() can only perform the "default argument promotions" of integer
  * and unsigned integer for unprototyped variadic args */

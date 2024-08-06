@@ -6,11 +6,11 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:16:24 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/06/22 20:15:57 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/05 18:53:20 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 #define DIGITS 65
 

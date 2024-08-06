@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 17:12:11 by rpeavey           #+#    #+#             */
+/*   Updated: 2024/08/05 17:12:12 by rpeavey          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "pipex.h"
 
 /* searches **env for "PATH" and returns index */
@@ -42,6 +54,7 @@ int	get_exit_status(int status)
 /* 1. Opens input file ror reading
  * 2. Opens output file for writing
  * fromfile is only ever stdin or stdout
+ * Error message is FISH version
  */
 int	redirect(int *to, char *topath, int from)
 {
@@ -72,7 +85,7 @@ int	redirect(int *to, char *topath, int from)
 	return (from);
 }
 
-// Dynamically allocates pipe fds
+/* Allocates pipe fd's per 'argc - 4 - heredoc' */
 void	create_pipes(t_args *st)
 {
 	int	i;
@@ -81,7 +94,7 @@ void	create_pipes(t_args *st)
 	st->fildes = malloc(st->cmd_count * sizeof(int *));
 	if (!st->fildes)
 		err("malloc", st, NULL, 0);
-	while (i < st->cmd_count)
+	while (i < st->cmd_count - 1)
 	{
 		st->fildes[i] = malloc(3 * sizeof(int));
 		if (!st->fildes[i])

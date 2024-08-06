@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* Returns NULL if heap string args are NULL, else \
 ** returns ptr to new string

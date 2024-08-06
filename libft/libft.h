@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   mylib.h                                            :+:      :+:    :+:   */
+/*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -18,7 +18,6 @@
 # include <unistd.h>
 # include <stdarg.h>
 
-//printf
 typedef enum e_types
 {
 	INT,
@@ -49,8 +48,6 @@ typedef struct s_spec
 	size_t				minprec;
 	size_t				padlen;
 }						t_spec;
-
-//libft
 typedef enum e_bool
 {
 	FALSE,
@@ -95,22 +92,24 @@ typedef unsigned long long	(t_uintptr_t);
 # define SPECS "cspduixX%"
 # define SUCCESS 0
 # define FAILURE -1
+# define TRUE 1
+# define FALSE 0
 
 /*
  * Extras / TODO
  */
 
-void				ft_lstdel(t_list **alst, void (*del)(void *, size_t));
-void				ft_lstadd(t_list **alist, t_list *new);
+//void				ft_lstdel(t_list **alst, void (*del)(void *, size_t));
+//void				ft_lstadd(t_list **alist, t_list *new);
 size_t				ft_strnlen(const char *s, size_t maxlen);
 char				*ft_strcpy(char *dest, const char *src);
 char				*ft_strncpy(char *dest, const char *src, size_t n);
 char				*ft_strcat(char *dest, const char *src);
 char				*ft_strncat(char *dest, const char *src, size_t n);
 void				*ft_memccpy(void *dest, const void *src, int c, size_t n);
-char				*ft_strstr(const char *str, const char *substr);
-char				*ft_strmap(char const *s, char (*f)(unsigned int, char));
-int					ft_strcmp(const char *s1, const char *s2);
+//char				*ft_strstr(const char *str, const char *substr);
+//char				*ft_strmap(char const *s, char (*f)(unsigned int, char));
+//int					ft_strcmp(const char *s1, const char *s2);
 
 /*
 ** Print functions
@@ -126,7 +125,6 @@ void				ft_putchar_fd(char c, int fd);
 void				ft_putstr_fd(char const *s, int fd);
 void				ft_putendl_fd(char const *s, int fd);
 void				ft_putnbr_fd(int n, int fd);
-void					ft_putmem(char const *s, size_t size);
 
 /*
 ** String functions
@@ -161,15 +159,17 @@ void				*ft_memmove(void *dest, const void *src, size_t n);
 void				*ft_memchr(const void *ptr, int ch, size_t n);
 int					ft_memcmp(const void *lhs, const void *rhs, size_t n);
 void				*ft_calloc(size_t nelem, size_t elsize);
-char					*ft_memdup(const char *s, size_t size);
-char					*ft_memjoin(char const *s1, char const *s2, \
+char				*ft_memdup(const char *s, size_t size);
+void				ft_putmem(char const *s, size_t size);
+char				*ft_memjoin(char const *s1, char const *s2, \
 						size_t l1, size_t l2);
+
 /*
 ** Tests
 */
 
-t_bool				ft_isupper(int c);
-t_bool				ft_islower(int c);
+//t_bool				ft_isupper(int c);
+//t_bool				ft_islower(int c);
 t_bool				ft_isalpha(int c);
 t_bool				ft_isdigit(int c);
 t_bool				ft_isalnum(int c);
@@ -183,7 +183,8 @@ t_bool				ft_isspace(int c);
 
 int					ft_atoi(const char *str);
 char				*ft_itoa(long long n);
-char					*ft_itoa_base(unsigned long long n, unsigned int base);
+char				*ft_itoa_base(unsigned long long n, unsigned int base);
+
 /*
 ** List manipulation
 */
@@ -199,38 +200,35 @@ void				ft_lstiter(t_list *lst, void (*f)(void *));
 t_list				*ft_lstmap(t_list *lst, void *(*f)(void *),
 						void (*del)(void *));
 
-/*
-**	PRINTF
-*/
-int						ft_printf(const char *s, ...);
-char					*type_switch(void *val, t_types typ, t_spec *specs);
-char					*repeat(size_t len, char ch);
+int					ft_printf(const char *s, ...);
+char				*type_switch(void *val, t_types typ, t_spec *specs);
+char				*repeat(size_t len, char ch);
 
 /* Flags */
-char					*safe_join(const char *s1, const char *s2);
-char					*append_char(const char *ch, const char *r);
-char					*apply_minwidth(char *r, t_spec *s);
-char					*apply_minprecision_num(char *r, t_spec *s);
-char					*apply_minprecision_char(char *r, t_spec *s);
+char				*safe_join(const char *s1, const char *s2);
+char				*append_char(const char *ch, const char *r);
+char				*apply_minwidth(char *r, t_spec *s);
+char				*apply_minprecision_num(char *r, t_spec *s);
+char				*apply_minprecision_char(char *r, t_spec *s);
 
 /* Utils */
-void					mark_init_and_advance(const char **s, t_spec *specs);
-int						in_set(const char *s, const char *set);
-unsigned int			print_output(void *res, t_spec *s);
-char					*to_upper(char *s);
-int						return_false_and_resetpos(const char **s, \
+void				mark_init_and_advance(const char **s, t_spec *specs);
+int					in_set(const char *s, const char *set);
+unsigned int		print_output(void *res, t_spec *s);
+char				*to_upper(char *s);
+int					return_false_and_resetpos(const char **s, \
 						t_spec *specs, unsigned int *bytes);
-unsigned int			putchar_with_return(unsigned int ch);
-char					*safe_mem_join(const char *s1, const char *s2, \
+unsigned int		putchar_with_return(unsigned int ch);
+char				*safe_mem_join(const char *s1, const char *s2, \
 						size_t sz1, size_t sz2);
 
 /* Format handlers */
-void					do_idu_formats(const char *s, va_list *args,
-							t_spec *specs, unsigned int *b);
-void					do_cs_formats(const char *s, va_list args,
-							t_spec *specs, unsigned int *b);
-void					do_xx_formats(const char *s, va_list args,
-							t_spec *specs, unsigned int *b);
-void					do_pc(const char *s, unsigned int *b);
+void				do_idu_formats(const char *s, va_list *args,
+						t_spec *specs, unsigned int *b);
+void				do_cs_formats(const char *s, va_list args,
+						t_spec *specs, unsigned int *b);
+void				do_xx_formats(const char *s, va_list args,
+						t_spec *specs, unsigned int *b);
+void				do_pc(const char *s, unsigned int *b);
 
 #endif

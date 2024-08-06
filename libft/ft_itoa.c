@@ -6,13 +6,13 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:16:24 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/06/19 20:45:57 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/05 19:00:00 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
-# define DIGITS 20
+#define DIGITS 20
 
 /* ITOA
 ** Returns new C-string representing n value

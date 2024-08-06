@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* init all but lengths */
 static void	_init_specs(t_spec *specs, const char *s)

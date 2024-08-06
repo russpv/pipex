@@ -1,7 +1,19 @@
-#ifndef PIPEX
-# define PIPEX
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 17:13:01 by rpeavey           #+#    #+#             */
+/*   Updated: 2024/08/05 17:35:57 by rpeavey          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-# include "libft/mylib.h"
+#ifndef PIPEX_H
+# define PIPEX_H
+
+# include "libft/libft.h"
 # include <errno.h>
 # include <fcntl.h>
 # include <stdbool.h>
@@ -34,7 +46,6 @@ typedef struct s_args
 
 	t_bool	heredoc;
 }			t_args;
-
 
 int			parse_args(int argc, char **argv, char **env, t_args *st);
 

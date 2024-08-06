@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "mylib.h"
+#include "libft.h"
 
 /* STRNLEN
 ** Returns # of bytes in s excl '\0', but at most maxlen 
