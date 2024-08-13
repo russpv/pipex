@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:11:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/07/30 19:14:56 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/13 15:11:37 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,8 @@ static inline int	get_word_count(char const *p, char const *sub)
 static inline void	*do_ops(char const *s, char ***arr, char const *temp,
 		unsigned int i)
 {
+	char *tmp;
+
 	(*arr)[i] = malloc(sizeof(char) * (temp - s + 1));
 	if (!(*arr)[i])
 	{
@@ -72,7 +74,9 @@ static inline void	*do_ops(char const *s, char ***arr, char const *temp,
 	}
 	(*arr)[i][temp - s] = 0;
 	ft_memmove((*arr)[i], s, temp - s);
-	(*arr)[i] = ft_strtrim((*arr)[i], " ");
+	tmp = ft_strtrim((*arr)[i], " ");
+	free((*arr)[i]);
+	(*arr)[i] = tmp;
 	if (!(*arr)[i])
 	{
 		arr_free((*arr), i);

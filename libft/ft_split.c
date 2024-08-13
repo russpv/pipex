@@ -6,10 +6,10 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:11:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/05/27 20:11:04 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/12 16:52:41 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
+#include <stdio.h>
 #include "libft.h"
 
 /* SPLIT
@@ -86,7 +86,7 @@ char	**ft_split(char const *s, char c)
 
 	count = get_word_count(s, c);
 	arr = malloc(sizeof(char *) * (count + 1));
-	if (!arr)
+	if (!arr || !s)
 		return (NULL);
 	arr[count] = NULL;
 	i = 0;

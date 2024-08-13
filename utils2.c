@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:22 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/05 17:12:23 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/13 15:28:39 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,29 +33,35 @@ void	err(const char *msg, t_args *st, char *str, int ern)
 	exit(EXIT_FAILURE);
 }
 
-static void	_free_arr(char **arr)
+void	free_arr(void **arr)
 {
-	while (*arr)
+	void ** ptr = arr;
+	while (*ptr)
 	{
-		free(*arr);
-		arr++;
+		free(*ptr);
+		ptr++;
 	}
+	free(arr);
 }
 
-static void	_free_arrarr(char ***arrarr)
+static void	_free_arrarr(void ***arrarr)
 {
-	while (*arrarr)
+	void ***ptr = arrarr;
+	while (*ptr)
 	{
-		_free_arr(*arrarr);
-		arrarr++;
+		free_arr(*ptr);
+		ptr++;
 	}
+	free(arrarr);
 }
 
 void	cleanup(t_args *st)
 {
 	if (st->cmdpaths)
-		_free_arr(st->cmdpaths);
+		free_arr((void**)st->cmdpaths);
 	if (st->execargs)
-		_free_arrarr(st->execargs);
+		_free_arrarr((void***)st->execargs);
+	if (st->fildes)
+		free_arr((void **)st->fildes);
 	return ;
 }

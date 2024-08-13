@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:11 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/05 17:12:12 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/13 16:52:02 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,10 @@ int	get_env_path(char **env)
 		s = (char *)path;
 		idx++;
 	}
+	    while (*env) {  // Loop through the array until we hit the null terminator
+        //dprintf(2, "%s\n", *env);  // Print each environment variable
+        env++;
+    } fflush(stderr);
 	return (FAILURE);
 }
 
@@ -56,7 +60,48 @@ int	get_exit_status(int status)
  * fromfile is only ever stdin or stdout
  * Error message is FISH version
  */
-int	redirect(int *to, char *topath, int from)
+#include <dirent.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+void list_open_fds() {
+    char path[256];
+    struct dirent *entry;
+    DIR *dir;
+
+    // Open the /proc/self/fd directory to read file descriptors
+    snprintf(path, sizeof(path), "/proc/%d/fd", getpid());
+    dir = opendir(path);
+    if (dir == NULL) {
+        perror("opendir");
+        exit(EXIT_FAILURE);
+    }
+
+    //dprintf(2, "Open file descriptors for process %d:\n", getpid());
+
+    // Read directory entries
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_name[0] >= '0' && entry->d_name[0] <= '9') {
+            int fd = atoi(entry->d_name);
+            char fd_path[256];
+            char target_path[256];
+
+            // Construct the path for each file descriptor
+            snprintf(fd_path, sizeof(fd_path), "/proc/%d/fd/%d", getpid(), fd);
+            ssize_t len = readlink(fd_path, target_path, sizeof(target_path) - 1);
+            if (len != -1) {
+                target_path[len] = '\0'; // Null-terminate the target path
+                //dprintf(2, "FD %d: %s\n", fd, target_path);
+            } else {
+                perror("readlink");
+            }
+        }
+    }
+
+    closedir(dir);
+}
+
+int	redirect(int *to, char *topath, int from, t_bool append)
 {
 	int	fd;
 
@@ -70,6 +115,8 @@ int	redirect(int *to, char *topath, int from)
 		}
 		else if (from == STDIN_FILENO)
 			fd = open(topath, O_RDONLY | O_CREAT, 0644);
+		else if (from == STDOUT_FILENO && append)
+			fd = open(topath, O_WRONLY | O_CREAT | O_APPEND, 0644);
 		else if (from == STDOUT_FILENO)
 			fd = open(topath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		else
@@ -78,28 +125,34 @@ int	redirect(int *to, char *topath, int from)
 			err("redirect() open", NULL, NULL, 0);
 	}
 	else
-		fd = *to;
-	if (dup2(fd, from) == -1)
+		fd = *to; 
+	//list_open_fds(); //DELET
+	//ft_printf("got fd:%d to:%d\n", fd, from);
+	if(dup2(fd, from) == -1)
 		err("dup2", NULL, NULL, 0);
+	//dprintf(2, "duped, closing fd: %d\n", fd);
 	close(fd);
+	//list_open_fds();
 	return (from);
 }
 
 /* Allocates pipe fd's per 'argc - 4 - heredoc' */
+/* fildes is an array of int* */
 void	create_pipes(t_args *st)
 {
 	int	i;
 
 	i = 0;
-	st->fildes = malloc(st->cmd_count * sizeof(int *));
+	st->fildes = malloc((st->cmd_count) * (sizeof(int *)));
 	if (!st->fildes)
 		err("malloc", st, NULL, 0);
+	st->fildes[st->cmd_count - 1] = NULL;
 	while (i < st->cmd_count - 1)
 	{
-		st->fildes[i] = malloc(3 * sizeof(int));
+		//ft_printf("making pipes for %d cmds\n", st->cmd_count);
+		st->fildes[i] = malloc(2 * sizeof(int));
 		if (!st->fildes[i])
 			err("malloc", st, NULL, 0);
-		st->fildes[2] = NULL;
 		if (pipe(st->fildes[i]) < 0)
 			err("pipe", st, NULL, 0);
 		i++;

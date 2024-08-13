@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:03:09 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/05/27 20:03:11 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/12 16:51:19 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,12 +33,13 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 		return (NULL);
 	if (start > ft_strlen(s))
 		return (NULL);
-	maxlen = ft_strlen(s) - start;
+	maxlen = ft_strlen(s) - (start - 1);
 	if (maxlen < len)
 		len = maxlen;
-	sub = malloc(sizeof(char) * len + 1);
+	sub = malloc(sizeof(char) * (len + 1));
 	if (!sub)
 		return (NULL);
+	ft_memcpy(sub, s + start, len);
 	sub[len] = 0;
-	return (ft_memcpy(sub, s + start, len));
+	return (sub);
 }

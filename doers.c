@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:04 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/05 17:12:05 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/13 14:52:38 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,14 +72,18 @@ static int	_load_cmdargs(char **argv, t_args *st)
 /* Parses PATH paths. Called once. */
 static char	**_get_paths(char **env, t_args *st)
 {
-	const char			*haystack = "PATH=";
-	const unsigned int	start = ft_strchr(haystack, '=') - haystack + 1;
+	const char			*path_str = env[st->path_offset];
+	const char			*equal_pos = ft_strchr(path_str, '=');
 	char				**res;
 	char				*s;
 
-	s = ft_substr(env[st->path_offset], start, -1);
-	if (!s)
+	s = NULL;
+	if (env == NULL || st == NULL || path_str == NULL)
 		return (NULL);
+	if (equal_pos != NULL)
+		s = ft_substr(path_str, equal_pos - path_str + 1, -1);
+	if (!s)
+		err("PATH parsing issue.", st, NULL, 0);
 	res = ft_split(s, ':');
 	free(s);
 	if (!res)
@@ -106,7 +110,7 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	i = -1;
 	while (++i < st->cmd_count)
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
-	free(paths);
+	free_arr((void **)paths);
 	return (EXIT_SUCCESS);
 }
 
