@@ -35,7 +35,9 @@ void	err(const char *msg, t_args *st, char *str, int ern)
 
 void	free_arr(void **arr)
 {
-	void ** ptr = arr;
+	void	**ptr;
+
+	ptr = arr;
 	while (*ptr)
 	{
 		free(*ptr);
@@ -46,7 +48,9 @@ void	free_arr(void **arr)
 
 static void	_free_arrarr(void ***arrarr)
 {
-	void ***ptr = arrarr;
+	void	***ptr;
+
+	ptr = arrarr;
 	while (*ptr)
 	{
 		free_arr(*ptr);
@@ -58,9 +62,9 @@ static void	_free_arrarr(void ***arrarr)
 void	cleanup(t_args *st)
 {
 	if (st->cmdpaths)
-		free_arr((void**)st->cmdpaths);
+		free_arr((void **)st->cmdpaths);
 	if (st->execargs)
-		_free_arrarr((void***)st->execargs);
+		_free_arrarr((void ***)st->execargs);
 	if (st->fildes)
 		free_arr((void **)st->fildes);
 	return ;

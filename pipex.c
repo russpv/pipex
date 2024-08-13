@@ -64,7 +64,7 @@ static void	_heredoc(char *eof)
 
 void	_close_pipes(int i, t_args *st)
 {
-	int j;
+	int	j;
 
 	j = 0;
 	while (j < st->cmd_count - 1)
@@ -81,34 +81,35 @@ void	_close_pipes(int i, t_args *st)
 
 static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
-//1	close(st->fildes[i][0]);
+	// 1	close(st->fildes[i][0]);
 	if (i == 0 && !st->heredoc)
 		redirect(NULL, argv[1], STDIN_FILENO, FALSE);
 	else if (i == 0 && st->heredoc)
 		_heredoc(argv[2]);
 	else
 		redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, FALSE);
-	//ft_printf("read end duped \n"); fflush(stdout);
-	if (i + 1 < st->cmd_count) {
-		//dprintf(2, "write fd:%d\n", st->fildes[i][1]);
+	// ft_printf("read end duped \n"); fflush(stdout);
+	if (i + 1 < st->cmd_count)
+	{
+		// dprintf(2, "write fd:%d\n", st->fildes[i][1]);
 		redirect(&st->fildes[i][1], NULL, STDOUT_FILENO, FALSE);
-		//dprintf(2, "write end duped\n");
-	} 
+		// dprintf(2, "write end duped\n");
+	}
 	else if (st->heredoc)
 		redirect(NULL, st->outfile, STDOUT_FILENO, TRUE);
 	else
 		redirect(NULL, st->outfile, STDOUT_FILENO, FALSE);
-	//dprintf(2, "(TBD)Child closing fd already closed by parent:%d", st->fildes[i - 1][1]);
-	//close(st->fildes[i - 1][1]);
-	//list_open_fds();
-	//dprintf(2, "Child executing...\n");
+	// dprintf(2, "(TBD)Child closing fd already closed by parent:%d",
+		st->fildes[i - 1][1]);
+	// close(st->fildes[i - 1][1]);
+	// list_open_fds();
+	// dprintf(2, "Child executing...\n");
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
-	else if (execve(st->cmdpaths[i], (char *const *)st->execargs[i],
-			env) == -1)
+	else if (execve(st->cmdpaths[i], (char *const *)st->execargs[i], env) == -1)
 		err("execve()", st, NULL, 0);
-//	cleanup(st);
-//	(void)env;
+	//	cleanup(st);
+	//	(void)env;
 	return (SUCCESS);
 }
 
@@ -116,16 +117,16 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 {
 	if (i + 1 < st->cmd_count)
-	{ 
-		//close(st->fildes[i][0]);
+	{
+		// close(st->fildes[i][0]);
 		close(st->fildes[i][1]);
 		waitpid(p, status, 0);
 	}
 	else
 	{
 		waitpid(p, status, 0);
-		//ft_printf("parent closing FD%d\n", st->fildes[i][1]);
-		//close(st->fildes[i][1]);
+		// ft_printf("parent closing FD%d\n", st->fildes[i][1]);
+		// close(st->fildes[i][1]);
 	}
 }
 

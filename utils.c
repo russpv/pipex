@@ -32,10 +32,12 @@ int	get_env_path(char **env)
 		s = (char *)path;
 		idx++;
 	}
-	    while (*env) {  // Loop through the array until we hit the null terminator
-        //dprintf(2, "%s\n", *env);  // Print each environment variable
-        env++;
-    } fflush(stderr);
+	while (*env)
+	{ // Loop through the array until we hit the null terminator
+		// dprintf(2, "%s\n", *env);  // Print each environment variable
+		env++;
+	}
+	fflush(stderr);
 	return (FAILURE);
 }
 
@@ -62,43 +64,49 @@ int	get_exit_status(int status)
  */
 #include <dirent.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-void list_open_fds() {
-    char path[256];
-    struct dirent *entry;
-    DIR *dir;
+#include <sys/stat.h>
 
-    // Open the /proc/self/fd directory to read file descriptors
-    snprintf(path, sizeof(path), "/proc/%d/fd", getpid());
-    dir = opendir(path);
-    if (dir == NULL) {
-        perror("opendir");
-        exit(EXIT_FAILURE);
-    }
+void	list_open_fds(void)
+{
+	char			path[256];
+	struct dirent	*entry;
+	DIR				*dir;
+	int				fd;
+			char fd_path[256];
+			char target_path[256];
+	ssize_t			len;
 
-    //dprintf(2, "Open file descriptors for process %d:\n", getpid());
-
-    // Read directory entries
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] >= '0' && entry->d_name[0] <= '9') {
-            int fd = atoi(entry->d_name);
-            char fd_path[256];
-            char target_path[256];
-
-            // Construct the path for each file descriptor
-            snprintf(fd_path, sizeof(fd_path), "/proc/%d/fd/%d", getpid(), fd);
-            ssize_t len = readlink(fd_path, target_path, sizeof(target_path) - 1);
-            if (len != -1) {
-                target_path[len] = '\0'; // Null-terminate the target path
-                //dprintf(2, "FD %d: %s\n", fd, target_path);
-            } else {
-                perror("readlink");
-            }
-        }
-    }
-
-    closedir(dir);
+	// Open the /proc/self/fd directory to read file descriptors
+	snprintf(path, sizeof(path), "/proc/%d/fd", getpid());
+	dir = opendir(path);
+	if (dir == NULL)
+	{
+		perror("opendir");
+		exit(EXIT_FAILURE);
+	}
+	// dprintf(2, "Open file descriptors for process %d:\n", getpid());
+	// Read directory entries
+	while ((entry = readdir(dir)) != NULL)
+	{
+		if (entry->d_name[0] >= '0' && entry->d_name[0] <= '9')
+		{
+			fd = atoi(entry->d_name);
+			// Construct the path for each file descriptor
+			snprintf(fd_path, sizeof(fd_path), "/proc/%d/fd/%d", getpid(), fd);
+			len = readlink(fd_path, target_path, sizeof(target_path) - 1);
+			if (len != -1)
+			{
+				target_path[len] = '\0'; // Null-terminate the target path
+				// dprintf(2, "FD %d: %s\n", fd, target_path);
+			}
+			else
+			{
+				perror("readlink");
+			}
+		}
+	}
+	closedir(dir);
 }
 
 int	redirect(int *to, char *topath, int from, t_bool append)
@@ -109,8 +117,8 @@ int	redirect(int *to, char *topath, int from, t_bool append)
 	{
 		if (from == STDIN_FILENO && access(topath, R_OK) == -1)
 		{
-			ft_printf("warning: An error occurred while redirecting file '%s'", \
-						topath);
+			ft_printf("warning: An error occurred while redirecting file '%s'",
+				topath);
 			fd = open("/dev/null", O_RDONLY);
 		}
 		else if (from == STDIN_FILENO)
@@ -125,14 +133,14 @@ int	redirect(int *to, char *topath, int from, t_bool append)
 			err("redirect() open", NULL, NULL, 0);
 	}
 	else
-		fd = *to; 
-	//list_open_fds(); //DELET
-	//ft_printf("got fd:%d to:%d\n", fd, from);
-	if(dup2(fd, from) == -1)
+		fd = *to;
+	// list_open_fds(); //DELET
+	// ft_printf("got fd:%d to:%d\n", fd, from);
+	if (dup2(fd, from) == -1)
 		err("dup2", NULL, NULL, 0);
-	//dprintf(2, "duped, closing fd: %d\n", fd);
+	// dprintf(2, "duped, closing fd: %d\n", fd);
 	close(fd);
-	//list_open_fds();
+	// list_open_fds();
 	return (from);
 }
 
@@ -149,7 +157,7 @@ void	create_pipes(t_args *st)
 	st->fildes[st->cmd_count - 1] = NULL;
 	while (i < st->cmd_count - 1)
 	{
-		//ft_printf("making pipes for %d cmds\n", st->cmd_count);
+		// ft_printf("making pipes for %d cmds\n", st->cmd_count);
 		st->fildes[i] = malloc(2 * sizeof(int));
 		if (!st->fildes[i])
 			err("malloc", st, NULL, 0);
