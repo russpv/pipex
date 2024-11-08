@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:11:58 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/13 16:54:34 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/21 16:08:56 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,19 +18,20 @@
 
 static int	_do_heredoc_write(char *eof, int fildes)
 {
-	char	*userinput;
+	char			*userinput;
+	unsigned int	bytes_read;
 
 	userinput = NULL;
 	ft_printf("> ");
-	userinput = get_line(STDIN_FILENO);
+	bytes_read = get_line(STDIN_FILENO, &userinput);
 	if (ft_strncmp(userinput, eof, ft_strlen(eof)) == 0)
 	{
 		free(userinput);
-		return (SUCCESS);
+		return (EXIT_SUCCESS);
 	}
-	write(fildes, userinput, ft_strlen(userinput));
+	write(fildes, userinput, bytes_read);
 	free(userinput);
-	return (FAILURE);
+	return (EXIT_FAILURE);
 }
 
 static void	_heredoc(char *eof)
@@ -47,7 +48,7 @@ static void	_heredoc(char *eof)
 	{
 		close(fildes[0]);
 		while (1)
-			if (_do_heredoc_write(eof, fildes[1]) == SUCCESS)
+			if (_do_heredoc_write(eof, fildes[1]) == EXIT_SUCCESS)
 				break ;
 		close(fildes[1]);
 		exit(EXIT_SUCCESS);
@@ -61,7 +62,7 @@ static void	_heredoc(char *eof)
 }
 
 /* Close all write ends but current i, close all read ends but i - 1 */
-
+/*
 void	_close_pipes(int i, t_args *st)
 {
 	int	j;
@@ -75,58 +76,49 @@ void	_close_pipes(int i, t_args *st)
 			close(st->fildes[j][0]);
 		j++;
 	}
-}
+}*/
 
 /* Each child reads from the prior pipe and writes to next pipe */
 
 static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
-	// 1	close(st->fildes[i][0]);
 	if (i == 0 && !st->heredoc)
 		redirect(NULL, argv[1], STDIN_FILENO, FALSE);
 	else if (i == 0 && st->heredoc)
 		_heredoc(argv[2]);
 	else
 		redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, FALSE);
-	// ft_printf("read end duped \n"); fflush(stdout);
 	if (i + 1 < st->cmd_count)
 	{
-		// dprintf(2, "write fd:%d\n", st->fildes[i][1]);
 		redirect(&st->fildes[i][1], NULL, STDOUT_FILENO, FALSE);
-		// dprintf(2, "write end duped\n");
 	}
 	else if (st->heredoc)
 		redirect(NULL, st->outfile, STDOUT_FILENO, TRUE);
 	else
 		redirect(NULL, st->outfile, STDOUT_FILENO, FALSE);
-	// dprintf(2, "(TBD)Child closing fd already closed by parent:%d",
-		st->fildes[i - 1][1]);
-	// close(st->fildes[i - 1][1]);
-	// list_open_fds();
-	// dprintf(2, "Child executing...\n");
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
 	else if (execve(st->cmdpaths[i], (char *const *)st->execargs[i], env) == -1)
 		err("execve()", st, NULL, 0);
-	//	cleanup(st);
-	//	(void)env;
 	return (SUCCESS);
 }
 
 /* Each parent needs to close pipe write ends for childs to read */
 static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 {
+	int	j;
+
 	if (i + 1 < st->cmd_count)
 	{
-		// close(st->fildes[i][0]);
 		close(st->fildes[i][1]);
-		waitpid(p, status, 0);
+		waitpid(p, status, WNOHANG);
 	}
 	else
 	{
 		waitpid(p, status, 0);
-		// ft_printf("parent closing FD%d\n", st->fildes[i][1]);
-		// close(st->fildes[i][1]);
+		j = -1;
+		while (st->fildes[++j])
+			close(st->fildes[j][0]);
 	}
 }
 
@@ -147,7 +139,7 @@ int	main(int argc, char *argv[], char *env[])
 		if (0 == p)
 		{
 			if (_do_child_ops(i, argv, env, &st) == FAILURE)
-				exit(127);
+				cleanup_and_exit(&st, 127);
 		}
 		else if (p > 0)
 			_do_parent_ops(i, p, &status, &st);

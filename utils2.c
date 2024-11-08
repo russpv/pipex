@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:22 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/13 15:28:39 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/20 17:43:16 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,15 +33,29 @@ void	err(const char *msg, t_args *st, char *str, int ern)
 	exit(EXIT_FAILURE);
 }
 
-void	free_arr(void **arr)
+void	free_arr(void **arr, int size)
 {
 	void	**ptr;
+	int		i;
 
+	i = -1;
 	ptr = arr;
-	while (*ptr)
+	if (size)
 	{
-		free(*ptr);
-		ptr++;
+		while (++i < size)
+			if (ptr[i])
+				free(ptr[i]);
+	}
+	else
+	{
+		if (*ptr)
+		{
+			while (*ptr)
+			{
+				free(*ptr);
+				ptr++;
+			}
+		}
 	}
 	free(arr);
 }
@@ -53,7 +67,7 @@ static void	_free_arrarr(void ***arrarr)
 	ptr = arrarr;
 	while (*ptr)
 	{
-		free_arr(*ptr);
+		free_arr(*ptr, 0);
 		ptr++;
 	}
 	free(arrarr);
@@ -61,11 +75,11 @@ static void	_free_arrarr(void ***arrarr)
 
 void	cleanup(t_args *st)
 {
-	if (st->cmdpaths)
-		free_arr((void **)st->cmdpaths);
+	if (st->cmdpaths && st->cmd_count)
+		free_arr((void **)st->cmdpaths, st->cmd_count);
 	if (st->execargs)
 		_free_arrarr((void ***)st->execargs);
 	if (st->fildes)
-		free_arr((void **)st->fildes);
+		free_arr((void **)st->fildes, 0);
 	return ;
 }

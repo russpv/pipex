@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:40 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/05 17:12:40 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/21 16:09:02 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,30 +75,30 @@ void	remove_outer_quotes(char ***arr)
 }
 
 /* simple fixed buffer version */
-char	*get_line(int fd)
+unsigned int	get_line(int fd, char **buf)
 {
-	char	*buf;
 	char	*p;
 	int		i;
 	int		bytes;
 
-	buf = malloc(sizeof(char) * BUFSZ);
-	if (!buf)
-		return (NULL);
-	p = buf;
+	*buf = malloc(sizeof(char) * BUFSZ);
+	if (!*buf)
+		return (0);
+	p = *buf;
 	i = 0;
 	p[0] = '0';
+	bytes = 0;
 	while (i < BUFSZ - 1)
 	{
-		bytes = read(fd, buf + i, 1);
+		bytes += read(fd, *buf + i, 1);
 		if (bytes == -1)
 			err("get line read()", NULL, NULL, 0);
-		if (bytes == 0 || buf[i] == '\0' || buf[i] == '\n')
+		if (bytes == 0 || (*buf)[i] == '\0' || (*buf)[i] == '\n')
 			break ;
 		i++;
 	}
-	buf[i] = '\n';
-	return (buf);
+	(*buf)[i] = '\n';
+	return (bytes);
 }
 
 /* Finds internal quotation mark in argv */

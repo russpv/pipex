@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:04 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/13 14:52:38 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/20 17:37:38 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	i = -1;
 	while (++i < st->cmd_count)
 		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
-	free_arr((void **)paths);
+	free_arr((void **)paths, 0);
 	return (EXIT_SUCCESS);
 }
 

@@ -1,13 +1,8 @@
 NAME = pipex
 OUTPUT = executable
 
-SOURCES = pipex.c doers.c utils.c utils2.c utils3.c string.c ft_splitsub.c 
+SOURCES = pipex.c doers.c utils.c utils2.c utils3.c string.c
           
-# ft_memset.c ft_memcpy.c ft_memmove.c ft_strlen.c \
-          ft_strlcat.c ft_strdup.c ft_strjoin.c ft_substr.c \
-          ft_split.c ft_strnlen_extra.c ft_putchar_fd.c \
-          ft_putstr_fd.c ft_strchr.c ft_isprint.c ft_strncmp.c \
-          ft_strnstr.c ft_strtrim.c ft_splitsub.c ft_strrchr.c
 BONUS_SOURCES = $(SOURCES)
 BONUS_OBJECTS = $(BONUS_SOURCES:.c=.o)
 OBJECTS = $(SOURCES:.c=.o)

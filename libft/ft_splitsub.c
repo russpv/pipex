@@ -6,11 +6,11 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/27 20:11:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/13 15:11:37 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/08 17:59:39 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "libft.h"
 
 /* SPLIT
 ** Returns new C-strings split by c or NULL (malloc)
@@ -64,7 +64,7 @@ static inline int	get_word_count(char const *p, char const *sub)
 static inline void	*do_ops(char const *s, char ***arr, char const *temp,
 		unsigned int i)
 {
-	char *tmp;
+	char	*tmp;
 
 	(*arr)[i] = malloc(sizeof(char) * (temp - s + 1));
 	if (!(*arr)[i])
