@@ -12,22 +12,21 @@
 
 #include "pipex.h"
 
-/* Takes each pipe command argument and does processing
-** Removes backslash escape chars
-** Caller must free array 
+/* Removes backslash escape chars from a single command string
+ * and returns it by reference.
 */
 int	process_string(char **args)
 {
 	char	*ptrs[3];
 
 	if (!args)
-		return (EXIT_FAILURE);
+		return (FAILURE);
 	while (*args)
 	{
 		ptrs[0] = *args;
 		ptrs[2] = malloc(ft_strlen(*args) + 1);
 		if (!ptrs[2])
-			return (EXIT_FAILURE);
+			return (FAILURE);
 		ptrs[1] = ptrs[2];
 		while (*ptrs[0])
 		{
@@ -40,9 +39,9 @@ int	process_string(char **args)
 		*args = ft_strdup(ptrs[2]);
 		free(ptrs[2]);
 		if (!*args++)
-			return (EXIT_FAILURE);
+			return (FAILURE);
 	}
-	return (EXIT_SUCCESS);
+	return (SUCCESS);
 }
 
 void	remove_outer_quotes(char ***arr)
@@ -74,7 +73,7 @@ void	remove_outer_quotes(char ***arr)
 	}
 }
 
-/* simple fixed buffer version */
+/* Simple unbuffered 1-char read */
 unsigned int	get_line(int fd, char **buf)
 {
 	char	*p;
@@ -101,7 +100,11 @@ unsigned int	get_line(int fd, char **buf)
 	return (bytes);
 }
 
-/* Finds internal quotation mark in argv */
+/* Finds which internal quotation mark in command
+ * 		for separating command from args
+ *
+ * Some commands use single marks for their args 
+ */
 void	get_split_delim(const char *arg, char *sub)
 {
 	if (ft_strchr(arg, '"') && ft_strchr(arg, '\''))

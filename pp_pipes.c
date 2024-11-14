@@ -12,32 +12,6 @@
 
 #include "pipex.h"
 
-/* searches **env for "PATH" and returns index */
-int	get_env_path(char **env)
-{
-	const char	*path = "PATH";
-	char		*s;
-	int			i;
-	int			idx;
-
-	s = (char *)path;
-	i = 0;
-	idx = 0;
-	while (env[idx])
-	{
-		while (env[idx][i] == s[i] && s[i] && env[idx][i])
-			i++;
-		if (s[i] == '\0')
-			return (idx);
-		s = (char *)path;
-		idx++;
-	}
-	while (*env)
-		env++;
-	fflush(stderr);
-	return (FAILURE);
-}
-
 /* Interpret waitpid() exit status (signals ignored here) */
 int	get_exit_status(int status)
 {
@@ -53,6 +27,7 @@ int	get_exit_status(int status)
 	return (exit_status);
 }
 
+/* Does the correct open() */
 static inline int	_redirect_logic(char *topath, int from, t_bool append)
 {
 	int	fd;
@@ -74,27 +49,34 @@ static inline int	_redirect_logic(char *topath, int from, t_bool append)
 	return (fd);
 }
 
-/* _REDIRECT() Wraps open() and dup2() */
-/* 1. Opens input file ror reading
+/* REDIRECT() 
+ * Encapsulates open() and dup2() and returns origin fd
+ * or -1 
+ * 1. Opens input file for reading
  * 2. Opens output file for writing
- * fromfile is only ever stdin or stdout
+ * from file is only ever stdin or stdout
  * Error message is FISH version
+ * 
+ * Uses to-fd unless NULL, then to-path 
+ * to: output fd
+ * topath: output fd file path
+ * from: input fd
+ * append: for opt <</>> here_doc 
  */
-
-int	redirect(int *to, char *topath, int from, t_bool append)
+int	redirect(int *to, char *topath, int from, t_bool ifappend)
 {
 	int	fd;
 
 	if (!to && (topath != NULL && *topath))
 	{
-		fd = _redirect_logic(topath, from, append);
+		fd = _redirect_logic(topath, from, ifappend);
 		if (fd < 0)
-			err("redirect() open", NULL, NULL, 0);
+			return (-1);
 	}
 	else
 		fd = *to;
 	if (dup2(fd, from) == -1)
-		err("dup2", NULL, NULL, 0);
+		return (-1);
 	close(fd);
 	return (from);
 }

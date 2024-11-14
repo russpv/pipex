@@ -12,12 +12,12 @@
 
 #include "pipex.h"
 
-/* Loads a single absolute command path into
-** struct at index idx if accessible
-** First loop searches PATH
-** Second conditionals test local scripts
+/* Locates the command binary, checks permissions, else 
+** 		sets command to NULL.
+** Searches PATH (paths) then local directory for binaries
+** args array is in struct at passed index
 */
-static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
+static int	_validate_cmd(int idx, char *cmd, const char **paths, t_args *st)
 {
 	int		i;
 	char	fullpath[PATHBUF];
@@ -32,16 +32,19 @@ static int	_load_cmdpath(int idx, char *cmd, const char **paths, t_args *st)
 		ft_strlcat((char *)fullpath, cmd, ft_strlen(fullpath) + ft_strlen(cmd)
 			+ 1);
 		if (check_access(fullpath, idx, st) != FAILURE)
-			return (EXIT_SUCCESS);
+			return (SUCCESS);
 	}
 	if (check_access(cmd, idx, st) != FAILURE)
-		return (EXIT_SUCCESS);
+		return (SUCCESS);
 	perror("PATH: command not found.");
 	st->cmdpaths[idx] = NULL;
-	return (EXIT_SUCCESS);
+	return (SUCCESS);
 }
 
-/* splits argv for use in execve() */
+/* Prepares all commands for eventual use in execve()
+ * Splits argv and does string processing
+ * Does not check commands are valid.
+ */
 static int	_load_cmdargs(char **argv, t_args *st)
 {
 	int		i;
@@ -66,10 +69,10 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	}
 	st->execargs[st->cmd_count] = NULL;
 	remove_outer_quotes(st->execargs);
-	return (EXIT_SUCCESS);
+	return (SUCCESS);
 }
 
-/* Parses PATH paths. Called once. */
+/* Returns PATH paths from env else returns NULL. */
 static char	**_get_paths(char **env, t_args *st)
 {
 	const char			*path_str = env[st->path_offset];
@@ -91,7 +94,9 @@ static char	**_get_paths(char **env, t_args *st)
 	return (res);
 }
 
-/* creates execve array argument in struct. Requires PATH. */
+/* Loads all pipeline command strings for execve() or 
+ * 	NULL if command is invalid.
+ */
 static int	_prep_execargs(char **argv, char **env, t_args *st)
 {
 	const char	**paths = (const char **)_get_paths(env, st);
@@ -109,17 +114,16 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 	st->cmdpaths[st->cmd_count] = NULL;
 	i = -1;
 	while (++i < st->cmd_count)
-		status = _load_cmdpath(i, st->execargs[i][0], paths, st);
+		status = _validate_cmd(i, st->execargs[i][0], paths, st);
 	free_arr((void **)paths, 0);
-	return (EXIT_SUCCESS);
+	return (SUCCESS);
 }
 
-/* returns offset for PATH, inits struct, loads execve args  */
 int	parse_args(int argc, char **argv, char **env, t_args *st)
 {
 	if (argc < MINARGS)
 		err("Insufficient arguments.", NULL, NULL, EINVAL);
 	init_struct(argc, argv, env, st);
 	_prep_execargs(argv, env, st);
-	return (EXIT_SUCCESS);
+	return (SUCCESS);
 }

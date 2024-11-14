@@ -1,7 +1,8 @@
 NAME = pipex
 OUTPUT = executable
 
-SOURCES = pipex.c doers.c utils.c utils2.c utils3.c string.c
+SOURCES = _main.c pp_err.c pp_frees.c pp_init.c pp_parser.c pp_pipes.c \
+			pp_string.c pp_utils.c
           
 BONUS_SOURCES = $(SOURCES)
 BONUS_OBJECTS = $(BONUS_SOURCES:.c=.o)

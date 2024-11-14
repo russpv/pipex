@@ -6,34 +6,47 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:11:58 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/21 16:08:56 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/08/20 19:00:31 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
 /* PIPEX
-** Expects "[infile] [command] | ... | [command] > [outfile]" args
+** Expects args "[infile] 	[command]  ... 	[command] 	[outfile]"
+** Like 		"[infile] < [command] |...| [command] > [outfile]"
+** 
+** OR
+** 		"./pipex here_doc LIMITER cmd ... cmd file"
+** 	like	"cmd << LIMITER | ... | cmd >> file"
+**
+** Designed to mimic ZSH pipe behavior with FISH messages (more descriptive)
+**
+** Uses only: open, close, read, write, malloc, free, perror,
+** 		access, dup, dup2, execve, exit, fork, pipe, wait, waitpid
 */
 
+/* Sends user prompt input to fildes until EOF entered */
 static int	_do_heredoc_write(char *eof, int fildes)
 {
-	char			*userinput;
+	char	*userinput;
 	unsigned int	bytes_read;
 
 	userinput = NULL;
 	ft_printf("> ");
-	bytes_read = get_line(STDIN_FILENO, &userinput);
+	bytes_read = get_line(STDIN_FILENO, &userinput); //TODO am I getting each line or the whole shebang?
 	if (ft_strncmp(userinput, eof, ft_strlen(eof)) == 0)
 	{
 		free(userinput);
-		return (EXIT_SUCCESS);
+		return (SUCCESS);
 	}
 	write(fildes, userinput, bytes_read);
 	free(userinput);
-	return (EXIT_FAILURE);
+	return (FAILURE);
 }
 
+/* Loads here-document input to stdin via pipe
+ */
 static void	_heredoc(char *eof)
 {
 	int		fildes[2];
@@ -48,7 +61,7 @@ static void	_heredoc(char *eof)
 	{
 		close(fildes[0]);
 		while (1)
-			if (_do_heredoc_write(eof, fildes[1]) == EXIT_SUCCESS)
+			if (_do_heredoc_write(eof, fildes[1]) == SUCCESS)
 				break ;
 		close(fildes[1]);
 		exit(EXIT_SUCCESS);
@@ -61,41 +74,36 @@ static void	_heredoc(char *eof)
 	}
 }
 
-/* Close all write ends but current i, close all read ends but i - 1 */
-/*
-void	_close_pipes(int i, t_args *st)
-{
-	int	j;
-
-	j = 0;
-	while (j < st->cmd_count - 1)
-	{
-		if (j != i)
-			close(st->fildes[j][1]);
-		if (j != i - 1)
-			close(st->fildes[j][0]);
-		j++;
-	}
-}*/
-
-/* Each child reads from the prior pipe and writes to next pipe */
-
+/* This executes the piped command
+ * Manages the various i/o whether process is first/heredoc, 
+ * mid, or last in the pipeline.
+ * Each child reads from the prior pipe and writes to next pipe
+ * Except for last command which writes to file.
+ */
 static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
-	if (i == 0 && !st->heredoc)
-		redirect(NULL, argv[1], STDIN_FILENO, FALSE);
-	else if (i == 0 && st->heredoc)
+	int r;
+
+	r = 0;
+	if (i == 0 && st->heredoc)
 		_heredoc(argv[2]);
-	else
-		redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, FALSE);
-	if (i + 1 < st->cmd_count)
+	else 
 	{
-		redirect(&st->fildes[i][1], NULL, STDOUT_FILENO, FALSE);
+		if (i == 0 && !st->heredoc)
+			r = redirect(NULL, argv[1], STDIN_FILENO, NO_APND);
+		else
+			r = redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, NO_APND);
+		if (r == -1)
+			err("redirect() stdin", st, NULL, 0);
+		if (i + 1 < st->cmd_count)
+			r = redirect(&st->fildes[i][1], NULL, STDOUT_FILENO, NO_APND);
+		else if (st->heredoc)
+			r = redirect(NULL, st->outfile, STDOUT_FILENO, APPEND);
+		else
+			r = redirect(NULL, st->outfile, STDOUT_FILENO, NO_APND);
+		if (r == -1)
+			err("redirect() stdout", st, NULL, 0);
 	}
-	else if (st->heredoc)
-		redirect(NULL, st->outfile, STDOUT_FILENO, TRUE);
-	else
-		redirect(NULL, st->outfile, STDOUT_FILENO, FALSE);
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
 	else if (execve(st->cmdpaths[i], (char *const *)st->execargs[i], env) == -1)
@@ -103,7 +111,15 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 	return (SUCCESS);
 }
 
-/* Each parent needs to close pipe write ends for childs to read */
+/* This manages the wait() behavior of each parent.
+ * The last wait blocks. 
+ 
+ * TODO: change to unblock. And loop wait() for all
+ * children.
+ * 
+ * Returns exit status by reference. 
+ * Closes pipe write ends for their child to read 
+ */
 static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 {
 	int	j;
@@ -122,7 +138,13 @@ static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 	}
 }
 
-/* This scheme achieves child to child communication */
+/* This scheme achieves CHILD-TO-CHILD communication 
+ * 
+ * Creates all pipes and launches all commands w/o
+ * waiting (i.e. in parallel). 
+ * 
+ * Waits for report from kernel for all children.
+ */
 int	main(int argc, char *argv[], char *env[])
 {
 	t_args	st;
@@ -149,3 +171,20 @@ int	main(int argc, char *argv[], char *env[])
 	cleanup(&st);
 	return (get_exit_status(status));
 }
+
+/* Close all write ends but current i, close all read ends but i - 1 */
+/*
+void	_close_pipes(int i, t_args *st)
+{
+	int	j;
+
+	j = 0;
+	while (j < st->cmd_count - 1)
+	{
+		if (j != i)
+			close(st->fildes[j][1]);
+		if (j != i - 1)
+			close(st->fildes[j][0]);
+		j++;
+	}
+}*/
