@@ -45,8 +45,7 @@ static int	_do_heredoc_write(char *eof, int fildes)
 	return (FAILURE);
 }
 
-/* Loads here-document input to stdin via pipe
- */
+/* Loads here-document input to stdin via pipe */
 static void	_heredoc(char *eof)
 {
 	int		fildes[2];
@@ -74,11 +73,27 @@ static void	_heredoc(char *eof)
 	}
 }
 
-/* This executes the piped command
- * Manages the various i/o whether process is first/heredoc, 
+int	close_pipes(t_args *st, int i)
+{
+// TODO: closes all pipe fd's except the ones needed
+	int j = 0;
+	while (++j < st->cmd_count)
+	{
+		if (j == i)
+			continue ;
+		close(st->fildes[i][0]); /* Close the other read ends except mine */
+		close(st->fildes[i][1]); /* Close other write ends except mine */
+	}
+}
+
+/* This executes the piped cmd and
+ * Manages the various I/O redirections whether process is first/heredoc, 
  * mid, or last in the pipeline.
- * Each child reads from the prior pipe and writes to next pipe
- * Except for last command which writes to file.
+ * 
+ * Each child reads from the prior child's write and 
+ * writes to next pipe (or file for last cmd)
+ * Each child writes to pipe first, then next child reads.
+ * Each pipe fd must be closed in every fork'd process.
  */
 static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
@@ -88,13 +103,16 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 	if (i == 0 && st->heredoc)
 		_heredoc(argv[2]);
 	else 
-	{
+	{ /* here, two pipes are active */
+		//if (i >= 1) // close prior write end ??
+		//	close(st->fildes[i - 1][1]);
+		close_pipes(st, i);
 		if (i == 0 && !st->heredoc)
 			r = redirect(NULL, argv[1], STDIN_FILENO, NO_APND);
 		else
 			r = redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, NO_APND);
 		if (r == -1)
-			err("redirect() stdin", st, NULL, 0);
+			err("Open (input)", st, NULL, 0);
 		if (i + 1 < st->cmd_count)
 			r = redirect(&st->fildes[i][1], NULL, STDOUT_FILENO, NO_APND);
 		else if (st->heredoc)
@@ -102,7 +120,7 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 		else
 			r = redirect(NULL, st->outfile, STDOUT_FILENO, NO_APND);
 		if (r == -1)
-			err("redirect() stdout", st, NULL, 0);
+			err("Open (output)", st, NULL, 0);
 	}
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
@@ -114,13 +132,14 @@ static int	_do_child_ops(int i, char *argv[], char *env[], t_args *st)
 /* This manages the wait() behavior of each parent.
  * The last wait blocks. 
  
- * TODO: change to unblock. And loop wait() for all
- * children.
+ * TODO: Test if a separate loop wait() for all
+ * children is equivalent to this.
  * 
  * Returns exit status by reference. 
- * Closes pipe write ends for their child to read 
+ * Parents 
  */
-static void	_do_parent_ops(int i, int p, int *status, t_args *st)
+// **** VERSION 1 *****
+/*static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 {
 	int	j;
 
@@ -136,6 +155,26 @@ static void	_do_parent_ops(int i, int p, int *status, t_args *st)
 		while (st->fildes[++j])
 			close(st->fildes[j][0]);
 	}
+}*/
+#include <sys/types.h>
+#include <sys/wait.h>
+static void	_waitchild(int *status, t_args *st)
+{
+    for (int i = 0; i < 3; i++) {
+		if (i >= 1)
+			close(st->fildes[i - 1][0]);
+        pid_t child_pid = waitpid(-1, status, 0); // Wait for any child process
+        if (child_pid > 0) {
+            // Process exited normally, or was terminated by a signal
+            if (WIFEXITED(*status)) {
+                printf("Child %d exited with status %d\n", child_pid, WEXITSTATUS(*status));
+            } else if (WIFSIGNALED(*status)) {
+                printf("Child %d exited due to signal %d\n", child_pid, WTERMSIG(*status));
+            }
+        }
+    }
+
+    printf("All child processes have terminated\n");
 }
 
 /* This scheme achieves CHILD-TO-CHILD communication 
@@ -143,7 +182,7 @@ static void	_do_parent_ops(int i, int p, int *status, t_args *st)
  * Creates all pipes and launches all commands w/o
  * waiting (i.e. in parallel). 
  * 
- * Waits for report from kernel for all children.
+ * Waits for report from kernel for all children before returning
  */
 int	main(int argc, char *argv[], char *env[])
 {
@@ -163,11 +202,15 @@ int	main(int argc, char *argv[], char *env[])
 			if (_do_child_ops(i, argv, env, &st) == FAILURE)
 				cleanup_and_exit(&st, 127);
 		}
-		else if (p > 0)
-			_do_parent_ops(i, p, &status, &st);
-		else
+		else if (p > 0) {
+			if (i < st.cmd_count && i > 0) {
+				close(st.fildes[i - 1][1]);//_do_parent_ops(i, p, &status, &st);
+				
+			}
+		}else
 			err("fork", &st, NULL, 0);
 	}
+	_waitchild(&status, &st);
 	cleanup(&st);
 	return (get_exit_status(status));
 }
