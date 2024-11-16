@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipex.c                                            :+:      :+:    :+:   */
+/*   _main.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:11:58 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/20 19:00:31 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/16 21:47:03 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,8 @@
  *
  * Waits for report from kernel for all children before returning
  */
+
+
 int	main(int argc, char *argv[], char *env[])
 {
 	t_args	st;
@@ -48,11 +50,13 @@ int	main(int argc, char *argv[], char *env[])
 		if (0 == p)
 		{
 			if (do_child_ops(i, argv, env, &st) == FAILURE)
-				cleanup_and_exit(&st, 127);
+			{ 	debug_print("error with ops\n");
+				cleanup_and_exit(&st, 127);}
 		}
 		else if (p < 0)
 			err("Fork", &st, NULL, 0);
 	}
+	debug_print("waiting for kids\n");
 	close_pipes(&st);
 	waitchild(&status, &st);
 	cleanup(&st);

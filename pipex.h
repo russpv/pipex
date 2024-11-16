@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:13:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/11/08 17:57:36 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/16 21:45:56 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include <stdlib.h>
 # include <sys/wait.h>
 # include <unistd.h>
+# include <limits.h>
 
 # ifdef DEBUGMODE
 #  define DEBUG 1
@@ -35,6 +36,16 @@
 # define NO_APND false
 # define APPEND true
 
+# ifdef SUCCESS
+#  undef SUCCESS
+#  undef FAILURE
+#  undef ERROR
+#  define SUCCESS 1
+#  define FAILURE 0
+#  define ERROR -1
+# endif
+
+
 typedef struct s_args
 {
 	int			argc;
@@ -42,8 +53,8 @@ typedef struct s_args
 
 	int			cmd_count;
 	int			path_offset;
-	char		**cmdpaths;
-	char		***execargs;
+	char		**cmdpaths; /* path and cmd */
+	char		***execargs; /* flags? */
 
 	int			fd;
 	int			**fildes;
@@ -79,18 +90,18 @@ int				do_child_ops(int i, char *argv[], char *env[], t_args *st);
 /* string - used by parser */
 int				process_string(char **arr);
 void			remove_outer_quotes(char ***arr);
-unsigned int	get_line(int fd, char **buf);
+int				get_line(int fd, char **buf);
 void			get_split_delim(const char *arg, char *sub);
 
 /* utils */
 int				check_access(char *path, int idx, t_args *st);
 void			debug_print(const char *msg, ...);
-
+void				print_live_processes();
 /* init */
 void			init_struct(int argc, char **argv, char **env, t_args *st);
 
 /* heredoc */
-void			get_heredoc(char *eof);
+void			get_heredoc(char *eof, t_args *st);
 
 /* frees */
 void			free_arr(void **arr, int size);

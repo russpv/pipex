@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.c                                            :+:      :+:    :+:   */
+/*   pp_pipe.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:11 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/13 17:20:26 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/16 21:21:48 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,6 @@ int	redirect(int *to, char *topath, int from, t_bool ifappend)
 }
 
 /* Allocates pipe fd's per 'argc - 4 - heredoc' */
-/* fildes is an array of int* */
 void	create_pipes(t_args *st)
 {
 	int	i;
@@ -94,6 +93,7 @@ void	create_pipes(t_args *st)
 	}
 }
 
+/* Closes all created pipe fds */
 int	close_pipes(t_args *st)
 {
 	int	i;

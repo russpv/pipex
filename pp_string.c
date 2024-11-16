@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string.c                                           :+:      :+:    :+:   */
+/*   pp_string.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:12:40 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/08/21 16:09:02 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/16 20:49:42 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,30 +73,34 @@ void	remove_outer_quotes(char ***arr)
 	}
 }
 
-/* Simple unbuffered 1-char read */
-unsigned int	get_line(int fd, char **buf)
+/* Simple unbuffered 1-char read until newline 
+ * Caller must free passed buffer */
+int	get_line(int fd, char **buf)
 {
-	char	*p;
 	int		i;
+	int		b;
 	int		bytes;
 
 	*buf = malloc(sizeof(char) * BUFSZ);
 	if (!*buf)
-		return (0);
-	p = *buf;
+		return (ERROR);
 	i = 0;
-	p[0] = '0';
 	bytes = 0;
 	while (i < BUFSZ - 1)
 	{
-		bytes += read(fd, *buf + i, 1);
-		if (bytes == -1)
-			err("get line read()", NULL, NULL, 0);
-		if (bytes == 0 || (*buf)[i] == '\0' || (*buf)[i] == '\n')
+		b = 0;
+		b = read(fd, (*buf) + i, 1);
+		if (-1 == b)
+		{
+			free(*buf);
+			return (ERROR);
+		}
+		bytes += b;
+		if (0 == b || (*buf)[i] == '\n')
 			break ;
 		i++;
 	}
-	(*buf)[i] = '\n';
+	(*buf)[i] = '\0';
 	return (bytes);
 }
 

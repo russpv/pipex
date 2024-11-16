@@ -27,8 +27,8 @@ static int	_close_other_pipe_ends(t_args *st, int i)
 			counter++;
 		}
 	}
-	debug_print("Child: closed %d pipe ends (%d cmds)\n", counter,
-		st->cmd_count);
+	debug_print("Child %d: closed %d pipe ends (%d cmds)\n", \
+			getpid(), counter, st->cmd_count);
 	return (1);
 }
 
@@ -37,9 +37,11 @@ static inline void	_do_child_inputs(t_args *st, char *argv[], int i)
 	int	r;
 
 	r = 0;
-	if (i == 0 && !st->heredoc)
+	if (i == 0 && st->heredoc)
+		get_heredoc(argv[2], st);
+	else if (i == 0 && !st->heredoc)
 		r = redirect(NULL, argv[1], STDIN_FILENO, NO_APND);
-	else
+	else if (!st->heredoc)
 		r = redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, NO_APND);
 	if (r == -1)
 		err("Open (input)", st, NULL, 0);
@@ -71,14 +73,10 @@ static inline void	_do_child_outputs(t_args *st, int i)
  */
 int	do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
-	if (i == 0 && st->heredoc)
-		get_heredoc(argv[2]);
-	else
-	{
-		_close_other_pipe_ends(st, i);
-		_do_child_inputs(st, argv, i);
-		_do_child_outputs(st, i);
-	}
+	_close_other_pipe_ends(st, i);
+	_do_child_inputs(st, argv, i);
+	_do_child_outputs(st, i);
+	debug_print("Child exec'g %s, %s\n", st->cmdpaths[i], *st->execargs[i]);
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
 	else if (execve(st->cmdpaths[i], (char *const *)st->execargs[i], env) == -1)

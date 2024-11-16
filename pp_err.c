@@ -1,6 +1,9 @@
 #include "pipex.h"
 
-/* zsh error message */
+/* zsh error message 
+ * This probably doesn't make it to tty
+ * But I don't have a stderr func atm 
+ */
 int	permission_err(char *path, t_args *st, int idx)
 {
 	if (st)

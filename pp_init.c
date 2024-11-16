@@ -47,9 +47,9 @@ void	init_struct(int argc, char **argv, char **env, t_args *st)
 	st->fd = 0;
 	st->fildes = NULL;
 	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0)
-		st->heredoc = TRUE;
+		st->heredoc = true;
 	else
-		st->heredoc = FALSE;
+		st->heredoc = false;
 	st->cmd_count = argc - (3 + st->heredoc);
 	if (argc < (MINARGS + (int)st->heredoc))
 		err("Init: Insufficient arguments.", st, NULL, EINVAL);

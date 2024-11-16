@@ -54,6 +54,7 @@ bonus: .bonus_made
 %.o: %.c # -DDEBUGMODE
 	$(CC) -c -DDEBUGMODE $(CFLAGS) $? -o $@ #Initial compilation of .c files
 
+
 # make shared object lib
 $(LIB_PATH):
 	@$(MAKE) -C $(LIB_DIR)

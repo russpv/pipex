@@ -1,6 +1,8 @@
 # Project specific
 SUBMIT1/
 libft/error.txt
+pipex
+*.txt
 
 # Prerequisites
 *.d
