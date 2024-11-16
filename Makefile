@@ -1,8 +1,9 @@
 NAME = pipex
 OUTPUT = executable
 
-SOURCES = _main.c pp_err.c pp_free.c pp_init.c pp_parse.c pp_pipe.c \
-			pp_string.c pp_utils.c
+SOURCES = _main.c \
+			pp_err.c pp_free.c pp_init.c pp_parse.c pp_pipe.c \
+			pp_string.c pp_utils.c pp_fork.c pp_child.c pp_heredoc.c
           
 BONUS_SOURCES = $(SOURCES)
 BONUS_OBJECTS = $(BONUS_SOURCES:.c=.o)
@@ -50,8 +51,8 @@ bonus: .bonus_made
 #	@echo "$(YELLOW)Created: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
 #	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) $? -o $@ #Initial compilation of .c files
+%.o: %.c # -DDEBUGMODE
+	$(CC) -c -DDEBUGMODE $(CFLAGS) $? -o $@ #Initial compilation of .c files
 
 # make shared object lib
 $(LIB_PATH):

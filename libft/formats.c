@@ -64,10 +64,8 @@ void	do_cs_formats(const char *s, va_list args, t_spec *specs, \
 		unsigned int *bytes)
 {
 	char	*string;
-	char	*res;
 	char	c;
 
-	res = NULL;
 	if (*s == 'c')
 	{
 		c = (char)va_arg(args, int);

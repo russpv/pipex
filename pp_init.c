@@ -34,7 +34,6 @@ static int	_get_env_path(char **env)
 	}
 	while (*env)
 		env++;
-	//fflush(stderr);
 	return (FAILURE);
 }
 
@@ -59,4 +58,3 @@ void	init_struct(int argc, char **argv, char **env, t_args *st)
 	if (st->path_offset == FAILURE)
 		err("Could not find PATH in env", st, NULL, 0);
 }
-

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "libft.h"
+#include <limits.h>
 
 #define DIGITS 65
 
@@ -24,10 +25,8 @@
 */
 static inline char	*load_str(char *s, unsigned long long n, unsigned int base)
 {
-	int			sign;
 	const char	*radix = "0123456789abcdefghijk";
 
-	sign = 0;
 	if (n == 0)
 		*s-- = '0';
 	while (n > 0)
@@ -38,14 +37,16 @@ static inline char	*load_str(char *s, unsigned long long n, unsigned int base)
 	return (++s);
 }
 
+/* Goes to the end of the char buffer and translates the char to digit 
+ */
 char	*ft_itoa_base(unsigned long long num, unsigned int base)
 {
-	char	c[DIGITS];
+	char	buf[DIGITS];
 	char	*s;
 	char	*dest;
 
-	ft_memset(&c, '\0', DIGITS);
-	s = load_str(c + (DIGITS - 2), num, base);
+	ft_memset(&buf, '\0', DIGITS);
+	s = load_str(buf + (DIGITS - 2), num, base);
 	dest = malloc(sizeof(char) * (ft_strlen(s) + 1));
 	if (!dest)
 		return (NULL);

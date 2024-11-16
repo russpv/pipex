@@ -14,7 +14,7 @@
 
 /* Removes backslash escape chars from a single command string
  * and returns it by reference.
-*/
+ */
 int	process_string(char **args)
 {
 	char	*ptrs[3];
@@ -103,7 +103,7 @@ unsigned int	get_line(int fd, char **buf)
 /* Finds which internal quotation mark in command
  * 		for separating command from args
  *
- * Some commands use single marks for their args 
+ * Some commands use single marks for their args
  */
 void	get_split_delim(const char *arg, char *sub)
 {

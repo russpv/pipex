@@ -12,23 +12,9 @@
 
 #include "pipex.h"
 
-/* Interpret waitpid() exit status (signals ignored here) */
-int	get_exit_status(int status)
-{
-	int	exit_status;
-	int	signal_number;
-
-	exit_status = 0;
-	signal_number = 0;
-	if (WIFEXITED(status))
-		exit_status = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		signal_number = WTERMSIG(status);
-	return (exit_status);
-}
-
 /* Does the correct open() 
- * If input file can't be opened, opens /dev/null/ and prints
+ * If input file can't be opened, opens /dev/null/ to allow cmd 
+ * to run otherwise and prints
  * warning as fish does
 */
 static inline int	_redirect_logic(char *topath, int from, t_bool append)
@@ -106,4 +92,17 @@ void	create_pipes(t_args *st)
 			err("pipe", st, NULL, 0);
 		i++;
 	}
+}
+
+int	close_pipes(t_args *st)
+{
+	int	i;
+
+	i = -1;
+	while (++i < st->cmd_count - 1)
+	{
+		close(st->fildes[i][0]);
+		close(st->fildes[i][1]);
+	}
+	return (1);
 }

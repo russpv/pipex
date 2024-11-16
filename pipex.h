@@ -22,6 +22,12 @@
 # include <sys/wait.h>
 # include <unistd.h>
 
+# ifdef DEBUGMODE
+#  define DEBUG 1
+# else
+#  define DEBUG 0
+# endif
+
 # define MINARGS 5
 # define PATHBUF 1024
 # define BUFSZ 1024
@@ -31,37 +37,44 @@
 
 typedef struct s_args
 {
-	int		argc;
-	char	**envp;
+	int			argc;
+	char		**envp;
 
-	int		cmd_count;
-	int		path_offset;
-	char	**cmdpaths;
-	char	***execargs;
+	int			cmd_count;
+	int			path_offset;
+	char		**cmdpaths;
+	char		***execargs;
 
-	int		fd;
-	int		**fildes;
+	int			fd;
+	int			**fildes;
 
-	char	*outfile;
+	char		*outfile;
 
-	t_bool	heredoc;
-}			t_args;
+	t_bool		heredoc;
+}				t_args;
 
 typedef struct s_cnxn
 {
-	int		from_fd;
-	int		to_fd;
-	char	*topath;
-	int		ifappend;
-}			t_cnxn;
+	int			from_fd;
+	int			to_fd;
+	char		*topath;
+	int			ifappend;
+}				t_cnxn;
 
 /* parser */
 int				parse_args(int argc, char **argv, char **env, t_args *st);
 
-/* pipes */
+/* pipe */
 int				redirect(int *to, char *topath, int from, t_bool append);
 void			create_pipes(t_args *st);
+int				close_pipes(t_args *st);
+
+/* fork */
 int				get_exit_status(int status);
+void			waitchild(int *status, t_args *st);
+
+/* child */
+int				do_child_ops(int i, char *argv[], char *env[], t_args *st);
 
 /* string - used by parser */
 int				process_string(char **arr);
@@ -71,9 +84,13 @@ void			get_split_delim(const char *arg, char *sub);
 
 /* utils */
 int				check_access(char *path, int idx, t_args *st);
+void			debug_print(const char *msg, ...);
 
 /* init */
 void			init_struct(int argc, char **argv, char **env, t_args *st);
+
+/* heredoc */
+void			get_heredoc(char *eof);
 
 /* frees */
 void			free_arr(void **arr, int size);

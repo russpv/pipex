@@ -16,3 +16,16 @@ int	check_access(char *path, int idx, t_args *st)
 	}
 	return (FAILURE);
 }
+
+void	debug_print(const char *format, ...)
+{
+	va_list	args;
+
+	if (DEBUG)
+	{
+		va_start(args, format);
+		fprintf(stderr, "DEBUG: ");
+		vfprintf(stderr, format, args);
+		va_end(args);
+	}
+}
