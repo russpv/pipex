@@ -17,7 +17,7 @@ BOLD = \033[1m
 
 # Compiler and flags
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g
+CFLAGS = -Wall -Wextra -Werror -g -fsanitize=address
 LDFLAGS = -L$(LIB_DIR) -lft
 LDFLAGS_SO = -L$(LIB_DIR) -lft -Wl,-rpath,$(LIB_DIR)
 
@@ -52,7 +52,7 @@ bonus: .bonus_made
 #	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
 
 %.o: %.c # -DDEBUGMODE
-	$(CC) -c -DDEBUGMODE $(CFLAGS) $? -o $@ #Initial compilation of .c files
+	$(CC) -c $(CFLAGS) $? -o $@ #Initial compilation of .c files
 
 
 # make shared object lib

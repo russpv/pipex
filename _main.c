@@ -26,13 +26,9 @@
 ** 		access, dup, dup2, execve, exit, fork, pipe, wait, waitpid
 **
 ** This scheme achieves CHILD-TO-CHILD communication
- *
- * Creates all pipes and launches all commands w/o
- * waiting (i.e. in parallel).
- *
- * Waits for report from kernel for all children before returning
- */
-
+** Creates all pipes and launches all commands w/o
+** 	waiting (i.e. in parallel)
+*/
 
 int	main(int argc, char *argv[], char *env[])
 {
@@ -50,13 +46,11 @@ int	main(int argc, char *argv[], char *env[])
 		if (0 == p)
 		{
 			if (do_child_ops(i, argv, env, &st) == FAILURE)
-			{ 	debug_print("error with ops\n");
-				cleanup_and_exit(&st, 127);}
+				cleanup_and_exit(&st, 127);
 		}
 		else if (p < 0)
 			err("Fork", &st, NULL, 0);
 	}
-	debug_print("waiting for kids\n");
 	close_pipes(&st);
 	waitchild(&status, &st);
 	cleanup(&st);

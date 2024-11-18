@@ -73,37 +73,6 @@ void	remove_outer_quotes(char ***arr)
 	}
 }
 
-/* Simple unbuffered 1-char read until newline 
- * Caller must free passed buffer */
-int	get_line(int fd, char **buf)
-{
-	int		i;
-	int		b;
-	int		bytes;
-
-	*buf = malloc(sizeof(char) * BUFSZ);
-	if (!*buf)
-		return (ERROR);
-	i = 0;
-	bytes = 0;
-	while (i < BUFSZ - 1)
-	{
-		b = 0;
-		b = read(fd, (*buf) + i, 1);
-		if (-1 == b)
-		{
-			free(*buf);
-			return (ERROR);
-		}
-		bytes += b;
-		if (0 == b || (*buf)[i] == '\n')
-			break ;
-		i++;
-	}
-	(*buf)[i] = '\0';
-	return (bytes);
-}
-
 /* Finds which internal quotation mark in command
  * 		for separating command from args
  *
