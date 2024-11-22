@@ -1,13 +1,6 @@
-NAME = pipex
+SHELL := /bin/bash
+TARGET = pipex
 OUTPUT = executable
-
-SOURCES = _main.c \
-			pp_err.c pp_free.c pp_init.c pp_parse.c pp_pipe.c \
-			pp_string.c pp_utils.c pp_fork.c pp_child.c pp_heredoc.c
-          
-BONUS_SOURCES = $(SOURCES)
-BONUS_OBJECTS = $(BONUS_SOURCES:.c=.o)
-OBJECTS = $(SOURCES:.c=.o)
 
 # Colors
 YELLOW = \033[33m
@@ -15,11 +8,24 @@ GREEN = \033[32m
 RESET = \033[0m
 BOLD = \033[1m
 
+# Dirs
+OBJDIR = obj
+OBJEXT = o
+SRCEXT = c
+DEPEXT = d
+INCDIR = inc
+TARGETDIR = bin
+SRCDIR = src
+RESDIR = res
+
 # Compiler and flags
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g -fsanitize=address
+CFLAGS = -Wall -Wextra -Werror -g
 LDFLAGS = -L$(LIB_DIR) -lft
 LDFLAGS_SO = -L$(LIB_DIR) -lft -Wl,-rpath,$(LIB_DIR)
+
+INC	= -I$(INCDIR)
+INCDEP = -I$(INCDIR)
 
 LIB_CPDIR = .
 LIB_DIR = libft
@@ -28,16 +34,53 @@ LIB_NAME_SO = libft.so
 LIB_PATH = $(LIB_DIR)/$(LIB_NAME)
 LIB_PATH_SO = $(LIB_DIR)/$(LIB_NAME_SO)
 
-# Targets
-all: $(NAME)
+# ----------------------------------------------------------------
+#  DO NOT EDIT BELOW
+# ----------------------------------------------------------------
 
-$(NAME): $(LIB_PATH) $(OBJECTS)
-	@echo "Creating $(NAME) $(OUTPUT)..."
-	$(CC) $^ -o $@ $(CFLAGS) $(LDFLAGS)
-	chmod +x $@
-	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
-	@echo "$(YELLOW)Created: $(words $(OBJECTS) ) object file(s)$(RESET)"
-	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
+# BONUS_SOURCES = $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+# BONUS_OBJECTS = $(addprefix $(OBJDIR), $(BONUS_SOURCES:.c=.o))
+SOURCES = $(shell find $(SRCDIR) -type f -name "*.$(SRCEXT)")
+OBJECTS = $(patsubst $(SRCDIR)/%,$(OBJDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+
+# Default Make
+all: resources $(TARGET)
+
+# Copy resources from dir to target dir
+resources: directories
+	@if [ -d "$(RESDIR)" ] && [ "$(shell ls -A $(RESDIR))" ]; then \
+        cp $(RESDIR)/* $(TARGETDIR)/; \
+	else \
+        echo "Warning: $(RESDIR) directory is empty or doesn't exist."; \
+	fi
+
+#Make the dirs
+directories:
+	@mkdir -p $(TARGETDIR)
+	@mkdir -p $(OBJDIR)
+
+# Pull in dependencies for *existing* .o files
+-include $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+
+# Link the executable
+$(TARGET): $(OBJECTS) $(LIB_PATH)
+	@echo "Linking with object files: $(OBJECTS)"
+	$(CC) -o $(TARGETDIR)/$(TARGET) $^ $(LDFLAGS)
+	chmod +x $(TARGETDIR)/$(TARGET)
+
+#Compile
+$(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > $(OBJDIR)/$*.$(DEPEXT)
+	@cp -f $(OBJDIR)/$*.$(DEPEXT) $(OBJDIR)/$*.$(DEPEXT).tmp
+	@sed -e 's|.*:|$(OBJDIR)/$*.$(OBJEXT):|' < $(OBJDIR)/$*.$(DEPEXT).tmp > $(OBJDIR)/$*.$(DEPEXT)
+	@sed -e 's/.*://' -e 's/\\$$//' < $(OBJDIR)/$*.$(DEPEXT).tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(OBJDIR)/$*.$(DEPEXT)
+	@rm -f $(OBJDIR)/$*.$(DEPEXT).tmp
+	
+#@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
+#@echo "$(YELLOW)Created: $(words $(OBJECTS) ) object file(s)$(RESET)"
+#@echo "$(YELLOW)Created: $(NAME)$(RESET)"
 
 bonus: .bonus_made
 
@@ -50,39 +93,45 @@ bonus: .bonus_made
 #	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
 #	@echo "$(YELLOW)Created: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
 #	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
+#
+#%(OBJDIR)/%.o: %.c | $(OBJDIR) # -DDEBUGMODE
+#	$(CC) -c $(CFLAGS) $< -o $@ #Initial compilation of .c files
 
-%.o: %.c # -DDEBUGMODE
-	$(CC) -c $(CFLAGS) $? -o $@ #Initial compilation of .c files
 
-
-# make shared object lib
+# make lib
 $(LIB_PATH):
 	@$(MAKE) -C $(LIB_DIR)
 	@echo "Copying $(LIB_NAME) to ../"
 	@cp $(LIB_PATH) .
 
+# clean only objects
 clean:
-	rm -f $(OBJECTS) $(BONUS_OBJECTS) 
+	@$(RM) -rf $(OBJDIR)
 	@$(MAKE) -C $(LIB_DIR) clean
+
+# Clean+, objects and binaries
+cleaner: clean
+	@$(RM) -rf $(TARGETDIR)
 	rm -f $(LIB_NAME) # don't delete so!
 	-@rm -f .bonus_made
-	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
-	@echo "$(YELLOW) Deleted: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
+# @echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
+# @echo "$(YELLOW) Deleted: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
 
-fclean: clean
-	rm -f $(NAME)
+# Full clean
+fclean: cleaner
 	rm -f $(LIB_PATH)
 	rm -f $(LIB_NAME)
 	rm -f $(LIB_NAME_SO)
-	@echo "$(GREEN)SUCCESS$(RESET)"
-	@echo "$(YELLOW) Deleted $(words $(NAME)) object files(s)$(RESET)"
-	@echo "$(YELLOW) Deleted: $(NAME)"
+	@$(MAKE) -C $(LIB_DIR) fclean
+	@rm -f $(LIB_DIR)/error.txt
+# @echo "$(GREEN)SUCCESS$(RESET)"
+# @echo "$(YELLOW) Deleted $(words $(NAME)) object files(s)$(RESET)"
+# @echo "$(YELLOW) Deleted: $(NAME)"
 
 re: fclean all
 
 so:
-
 	$(CC) -fPIC $(CFLAGS) -c $(SOURCES) $(BONUS_SOURCES)
 	$(CC) -nostartfiles -shared -o pipex.so $(OBJECTS) $(BONUS_OBJECTS)
 
-.PHONY: all bonus clean fclean re so
+.PHONY: all bonus clean cleaner fclean re resources so

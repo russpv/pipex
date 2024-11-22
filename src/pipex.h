@@ -6,14 +6,14 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:13:01 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/11/16 21:45:56 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/21 18:44:11 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PIPEX_H
 # define PIPEX_H
 
-# include "libft/libft.h"
+# include "../libft/libft.h"
 # include <errno.h>
 # include <fcntl.h>
 # include <limits.h>
@@ -33,8 +33,8 @@
 # define PATHBUF 1024
 # define BUFSZ 1024
 # define LIMIT 10000
-# define NO_APND false
-# define APPEND true
+# define NO_APND 0
+# define APPEND 1
 
 # ifdef SUCCESS
 #  undef SUCCESS
@@ -100,7 +100,7 @@ void		print_live_processes(void);
 void		init_struct(int argc, char **argv, char **env, t_args *st);
 
 /* heredoc */
-void		get_heredoc(char *eof, t_args *st);
+int			get_heredoc(char *eof, t_args *st);
 
 /* frees */
 void		free_arr(void **arr, int size);
@@ -108,7 +108,7 @@ void		cleanup(t_args *st);
 void		cleanup_and_exit(t_args *st, int code);
 
 /* err */
-void		err(const char *msg, t_args *st, char *str, int ern);
+void		err(const char *msg, t_args *st, void *str, int ern);
 int			permission_err(char *path, t_args *st, int idx);
 
 /* Lib */

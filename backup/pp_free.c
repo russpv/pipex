@@ -12,6 +12,7 @@
 
 #include "pipex.h"
 
+/* Frees arrays with optional size argument */
 void	free_arr(void **arr, int size)
 {
 	void	**ptr;

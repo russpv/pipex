@@ -16,6 +16,7 @@
 ** 		sets command to NULL.
 ** Searches PATH (paths) then local directory for binaries
 ** args array is in struct at passed index
+** If the cmd is empty/blank, prints msg and sets to NULL
 */
 static int	_validate_cmd(int idx, char *cmd, const char **paths, t_args *st)
 {
@@ -23,19 +24,22 @@ static int	_validate_cmd(int idx, char *cmd, const char **paths, t_args *st)
 	char	fullpath[PATHBUF];
 
 	i = -1;
-	while (paths[++i] && ft_strncmp(cmd, ".", 1) && !ft_strchr(cmd, '/'))
+	if (!(NULL == cmd || '\0' == cmd[0]))
 	{
-		ft_memset(fullpath, 0, PATHBUF);
-		ft_memcpy(fullpath, paths[i], ft_strlen(paths[i]));
-		if (fullpath[ft_strlen(fullpath) - 1] != '/')
-			ft_strlcat((char *)fullpath, "/", ft_strlen(fullpath) + 2);
-		ft_strlcat((char *)fullpath, cmd, ft_strlen(fullpath) + ft_strlen(cmd)
-			+ 1);
-		if (check_access(fullpath, idx, st) != FAILURE)
+		while (paths[++i] && ft_strncmp(cmd, ".", 1) && !ft_strchr(cmd, '/'))
+		{
+			ft_memset(fullpath, 0, PATHBUF);
+			ft_memcpy(fullpath, paths[i], ft_strlen(paths[i]));
+			if (fullpath[ft_strlen(fullpath) - 1] != '/')
+				ft_strlcat((char *)fullpath, "/", ft_strlen(fullpath) + 2);
+			ft_strlcat((char *)fullpath, cmd, ft_strlen(fullpath) + \
+				ft_strlen(cmd) + 1);
+			if (check_access(fullpath, idx, st) != FAILURE)
+				return (SUCCESS);
+		}
+		if (check_access(cmd, idx, st) != FAILURE)
 			return (SUCCESS);
 	}
-	if (check_access(cmd, idx, st) != FAILURE)
-		return (SUCCESS);
 	perror("PATH: command not found.");
 	st->cmdpaths[idx] = NULL;
 	return (SUCCESS);
@@ -44,6 +48,11 @@ static int	_validate_cmd(int idx, char *cmd, const char **paths, t_args *st)
 /* Prepares all commands for eventual use in execve()
  * Splits argv and does string processing
  * Does not check commands are valid.
+ * 
+ * sub is a string that returns the string delimiter 
+ * for splitting: ' ', ' '' or ' "' or ' ?' in case of 
+ * multiple dots '.' so it does not split.
+ * actually should not split in case of a '.' (prog)
  */
 static int	_load_cmdargs(char **argv, t_args *st)
 {
@@ -51,28 +60,30 @@ static int	_load_cmdargs(char **argv, t_args *st)
 	char	**arr;
 	char	sub[3];
 
-	i = 0;
+	i = -1;
 	sub[0] = ' ';
 	sub[2] = 0;
 	st->execargs = malloc(sizeof(char **) * (st->cmd_count + 1));
 	if (!st->execargs)
-		err("_load_cmdargs()", st, NULL, 0);
-	while (i < st->cmd_count)
+		return (FAILURE);
+	while (++i < st->cmd_count)
 	{
 		get_split_delim(argv[i + 2 + (int)st->heredoc], sub);
 		arr = ft_splitsub(argv[i + 2 + (int)st->heredoc], sub);
 		if (!arr)
-			err("_load_cmdargs()", st, NULL, 0);
+		{
+			free_arr((void **)arr, i + 1);
+			return (FAILURE);
+		}
 		process_string(arr);
 		st->execargs[i] = arr;
-		i++;
 	}
 	st->execargs[st->cmd_count] = NULL;
 	remove_outer_quotes(st->execargs);
 	return (SUCCESS);
 }
 
-/* Returns PATH paths from env else returns NULL. */
+/* Returns PATH paths in a new array from env else returns NULL. */
 static char	**_get_paths(char **env, t_args *st)
 {
 	const char			*path_str = env[st->path_offset];
@@ -94,8 +105,11 @@ static char	**_get_paths(char **env, t_args *st)
 	return (res);
 }
 
-/* Loads all pipeline command strings for execve() or 
- * 	NULL if command is invalid.
+/* Validates and loads all pipeline command strings for execve()
+ * or NULL if command is invalid.
+ * execargs is a char***
+ * "Blank command" err() never happens currently, and childs
+ * are created.
  */
 static int	_prep_execargs(char **argv, char **env, t_args *st)
 {
@@ -107,14 +121,18 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 		err("Could not split PATH", st, NULL, 0);
 	status = _load_cmdargs(argv, st);
 	if (status == FAILURE)
-		err("Could not load command arguments", st, NULL, 0);
+		err("Could not load command arguments", st, paths, 0);
 	st->cmdpaths = malloc(sizeof(char *) * (st->cmd_count + 1));
 	if (!st->cmdpaths)
-		err("Malloc error", st, NULL, 0);
+		err("Malloc error", st, paths, ENOMEM);
 	st->cmdpaths[st->cmd_count] = NULL;
 	i = -1;
 	while (++i < st->cmd_count)
+	{
 		status = _validate_cmd(i, st->execargs[i][0], paths, st);
+		if (status == FAILURE)
+			err("Blank command", st, paths, EINVAL);
+	}
 	free_arr((void **)paths, 0);
 	return (SUCCESS);
 }

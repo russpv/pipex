@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pp_child.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rpeavey <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/11/18 15:19:22 by rpeavey           #+#    #+#             */
+/*   Updated: 2024/11/18 15:19:24 by rpeavey          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "pipex.h"
 
 /* Closes all the pipe ends for the i-th child
@@ -40,7 +52,7 @@ static inline void	_do_child_inputs(t_args *st, char *argv[], int i)
 
 	r = 0;
 	if (i == 0 && st->heredoc)
-		get_heredoc(argv[2], st);
+		r = get_heredoc(argv[2], st);
 	else if (i == 0 && !st->heredoc)
 		r = redirect(NULL, argv[1], STDIN_FILENO, NO_APND);
 	else
@@ -61,7 +73,7 @@ static inline void	_do_child_outputs(t_args *st, int i)
 	else
 		r = redirect(NULL, st->outfile, STDOUT_FILENO, NO_APND);
 	if (r == -1)
-		err("Open (output)", st, NULL, 0);
+		err("Open (output)", st, NULL, EACCES);
 }
 
 /* This executes the piped cmd and

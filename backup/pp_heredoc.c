@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pp_heredoc.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rpeavey <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/11/18 15:19:32 by rpeavey           #+#    #+#             */
+/*   Updated: 2024/11/18 15:19:33 by rpeavey          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "pipex.h"
 
 /* Simple unbuffered 1-char read until newline
@@ -60,7 +72,7 @@ static int	_do_heredoc_write(t_args *st, char *eof, int fildes)
  * for the first pipe's write end, which we
  * immediately close after the fork.
  */
-void	get_heredoc(char *eof, t_args *st)
+int	get_heredoc(char *eof, t_args *st)
 {
 	int		fildes[2];
 	pid_t	p;
@@ -81,5 +93,7 @@ void	get_heredoc(char *eof, t_args *st)
 		cleanup_and_exit(st, 0);
 	}
 	close(fildes[1]);
+	wait(NULL);
 	redirect(&fildes[0], NULL, STDIN_FILENO, false);
+	return (1);
 }
