@@ -21,6 +21,7 @@ RESDIR = res
 # Compiler and flags
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -g
+EXT_CFLAGS = -DEXTENDEDFUNC
 LDFLAGS = -L$(LIB_DIR) -lft
 LDFLAGS_SO = -L$(LIB_DIR) -lft -Wl,-rpath,$(LIB_DIR)
 
@@ -67,6 +68,7 @@ $(TARGET): $(OBJECTS) $(LIB_PATH)
 	@echo "Linking with object files: $(OBJECTS)"
 	$(CC) -o $(TARGETDIR)/$(TARGET) $^ $(LDFLAGS)
 	chmod +x $(TARGETDIR)/$(TARGET)
+	@cp $(TARGETDIR)/$(TARGET) .
 
 #Compile
 $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
@@ -84,12 +86,10 @@ $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 
 bonus: .bonus_made
 
-.bonus_made: $(NAME)
-
-#	@echo "Creating $(NAME) $(OUTPUT)..."
-#	$(CC) $^ -o $@ $(CFLAGS)
-#	chmod +x $@
-#	-@touch .bonus_made
+.bonus_made: 
+	@echo "Creating $(NAME) $(OUTPUT) with extended functionality..."
+	$(MAKE) CFLAGS="$(CFLAGS) $(EXT_CFLAGS)"
+	-@touch .bonus_made
 #	@echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
 #	@echo "$(YELLOW)Created: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
 #	@echo "$(YELLOW)Created: $(NAME)$(RESET)"
@@ -112,6 +112,7 @@ clean:
 # Clean+, objects and binaries
 cleaner: clean
 	@$(RM) -rf $(TARGETDIR)
+	@$(RM) -f $(TARGET) # copied to root for lame evaluators
 	rm -f $(LIB_NAME) # don't delete so!
 	-@rm -f .bonus_made
 # @echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"

@@ -45,13 +45,15 @@ void	init_struct(int argc, char **argv, char **env, t_args *st)
 	st->execargs = NULL;
 	st->fd = 0;
 	st->fildes = NULL;
-	if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0)
-		st->heredoc = true;
-	else
-		st->heredoc = false;
-	st->cmd_count = argc - (3 + st->heredoc);
-	if (argc < (MINARGS + (int)st->heredoc))
-		err("Init: Insufficient arguments.", st, NULL, EINVAL);
+	st->heredoc = false;
+	if (EXTENDED)
+	{
+		if (ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])) == 0)
+			st->heredoc = true;
+		if (argc < (MINARGS + (int)st->heredoc))
+			err("Init: Insufficient arguments.", st, NULL, EINVAL);
+	}
+	st->cmd_count = argc - (3 + (int)st->heredoc);
 	st->outfile = argv[argc - 1];
 	st->path_offset = _get_env_path(env);
 	if (st->path_offset == FAILURE)

@@ -6,7 +6,7 @@
 /*   By: rpeavey <rpeavey@student.42singapore.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 17:11:58 by rpeavey           #+#    #+#             */
-/*   Updated: 2024/11/16 21:47:03 by rpeavey          ###   ########.fr       */
+/*   Updated: 2024/11/25 12:57:26 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,11 @@
 ** This scheme achieves CHILD-TO-CHILD communication
 ** Creates all pipes and launches all commands w/o
 ** 	waiting (i.e. in parallel)
+**
+** As a consequence, output redirection issues do not trigger exit
+** if a heredoc is involved; and this doesn't check access in light 
+** of TOCTTOU.
+** Also, any command including a '.' is treated as local dir.
 */
 
 int	main(int argc, char *argv[], char *env[])

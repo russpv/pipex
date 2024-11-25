@@ -61,7 +61,7 @@ static inline void	_do_child_inputs(t_args *st, char *argv[], int i)
 		err("Open (input)", st, NULL, 0);
 }
 
-static inline void	_do_child_outputs(t_args *st, int i)
+static inline int	_do_child_outputs(t_args *st, int i)
 {
 	int	r;
 
@@ -74,6 +74,7 @@ static inline void	_do_child_outputs(t_args *st, int i)
 		r = redirect(NULL, st->outfile, STDOUT_FILENO, NO_APND);
 	if (r == -1)
 		err("Open (output)", st, NULL, EACCES);
+	return (SUCCESS);
 }
 
 /* This executes the piped cmd and
@@ -84,12 +85,16 @@ static inline void	_do_child_outputs(t_args *st, int i)
  * writes to next pipe (or file for last cmd)
  * Each child writes to pipe first, then next child reads.
  * Each pipe fd must be closed in every fork'd process.
+ * 
+ * Outputs redirected first in case of terminal error.
+ * (Input problem does not exit immediately)
  */
 int	do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
 	_close_other_pipe_ends(st, i);
+	if (FAILURE == _do_child_outputs(st, i))
+		return (FAILURE);
 	_do_child_inputs(st, argv, i);
-	_do_child_outputs(st, i);
 	debug_print("Child exec'g %s, %s\n", st->cmdpaths[i], *st->execargs[i]);
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);

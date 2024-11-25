@@ -29,6 +29,12 @@
 #  define DEBUG 0
 # endif
 
+# ifdef EXTENDEDFUNC
+#  define EXTENDED 1
+# else
+#  define EXTENDED 0
+# endif
+
 # define MINARGS 5
 # define PATHBUF 1024
 # define BUFSZ 1024

@@ -139,8 +139,14 @@ static int	_prep_execargs(char **argv, char **env, t_args *st)
 
 int	parse_args(int argc, char **argv, char **env, t_args *st)
 {
-	if (argc < MINARGS)
-		err("Insufficient arguments.", NULL, NULL, EINVAL);
+	if (EXTENDED)
+	{
+		if (argc < MINARGS)
+			err("Insufficient arguments.", NULL, NULL, EINVAL);
+	}
+	else
+		if (argc != MINARGS)
+			err("Incorrect arguments.", NULL, NULL, EINVAL);
 	init_struct(argc, argv, env, st);
 	_prep_execargs(argv, env, st);
 	return (SUCCESS);
