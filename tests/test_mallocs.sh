@@ -4,7 +4,7 @@
 PROGRAM="./pipex"  # Replace with the path to your compiled program
 
 # Example arguments to pass to your program (adjust as needed)
-ARGS="infile.txt cat wc outfile.txt"
+ARGS="here_doc EOF cat cat wc outfile.txt"
 
 # Number of runs to perform with different call_count values (1, 2, 3,...)
 NUM_RUNS=6  # Adjust this depending on how many times you want to run

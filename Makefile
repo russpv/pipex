@@ -55,7 +55,7 @@ resources: directories
         echo "Warning: $(RESDIR) directory is empty or doesn't exist."; \
 	fi
 
-#Make the dirs
+# Make the dirs
 directories:
 	@mkdir -p $(TARGETDIR)
 	@mkdir -p $(OBJDIR)
@@ -70,7 +70,7 @@ $(TARGET): $(OBJECTS) $(LIB_PATH)
 	chmod +x $(TARGETDIR)/$(TARGET)
 	@cp $(TARGETDIR)/$(TARGET) .
 
-#Compile
+# Compile
 $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
@@ -86,7 +86,8 @@ $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 
 bonus: .bonus_made
 
-.bonus_made: 
+.bonus_made:  
+	$(MAKE) -C . clean
 	@echo "Creating $(NAME) $(OUTPUT) with extended functionality..."
 	$(MAKE) CFLAGS="$(CFLAGS) $(EXT_CFLAGS)"
 	-@touch .bonus_made
@@ -106,6 +107,7 @@ $(LIB_PATH):
 
 # clean only objects
 clean:
+	@$(RM) -f .bonus_made
 	@$(RM) -rf $(OBJDIR)
 	@$(MAKE) -C $(LIB_DIR) clean
 
@@ -114,7 +116,6 @@ cleaner: clean
 	@$(RM) -rf $(TARGETDIR)
 	@$(RM) -f $(TARGET) # copied to root for lame evaluators
 	rm -f $(LIB_NAME) # don't delete so!
-	-@rm -f .bonus_made
 # @echo "$(GREEN)$(BOLD)SUCCESS$(RESET)"
 # @echo "$(YELLOW) Deleted: $(words $(OBJECTS) $(BONUS_OBJECTS)) object file(s)$(RESET)"
 

@@ -23,8 +23,9 @@ static inline int	_redirect_logic(char *topath, int from, t_bool append)
 
 	if (from == STDIN_FILENO && access(topath, R_OK) == -1)
 	{
-		ft_printf("warning: An error occurred while redirecting file '%s'\n", \
-				topath);
+		printerr("Warning: An error occurred while redirecting file '");
+		printerr(topath);
+		printerr("'\n");
 		fd = open("/dev/null", O_RDONLY);
 		errno = EACCES;
 	}

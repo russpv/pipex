@@ -20,7 +20,7 @@ int	permission_err(char *path, t_args *st, int idx)
 {
 	if (st)
 		st->cmdpaths[idx] = NULL;
-	ft_printf("Permission denied: %s", path);
+	ft_printf("Permission denied: %s\n", path);
 	errno = EACCES;
 	return (SUCCESS);
 }

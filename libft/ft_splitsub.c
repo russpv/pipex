@@ -9,13 +9,14 @@
 /*   Updated: 2024/11/08 17:59:39 by rpeavey          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
+#include <stdio.h>
 #include "libft.h"
 
 /* SPLIT
 ** Returns new C-strings split by c or NULL (malloc)
 ** Array is null terminated
 ** Allows empty strings from consecutive c's
+** If split sub string is empty, returns new arr with 1 string
 */
 
 static inline void	arr_free(char **arr, unsigned int i)
@@ -101,7 +102,7 @@ char	**ft_splitsub(char const *s, char const *sub)
 	while (*s && count)
 	{
 		temp = ft_strnstr(s, sub, -1);
-		if (!temp)
+		if (!temp || s == temp)
 			temp = ft_strchr(s, 0);
 		if (temp - s > 0)
 		{

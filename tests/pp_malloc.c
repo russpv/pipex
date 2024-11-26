@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <dlfcn.h>  // For dlsym()
 
-
-// Override malloc
+/* Override malloc.
+ * Define a macro that replaces malloc() calls with this.
+   #define malloc(X) my_malloc(X)
+   void* my_malloc(size_t size);
+ */
 void* my_malloc(size_t size) {
     static void* (*real_malloc)(size_t) = NULL;
 
@@ -19,18 +22,19 @@ void* my_malloc(size_t size) {
     }
     // Simulate malloc failure on specific condition
     static int call_count = 0;
-
+    int failure_call = 0;
   // Check if the environment variable CALL_COUNT is set
     char *env_call_count = getenv("CALL_COUNT");
     if (env_call_count) {
-        call_count = atoi(env_call_count);  // Set call_count from the environment variable
+        failure_call = atoi(env_call_count);  // Set call_count from the environment variable
     }
+    // CALL_COUNT is incremented in the test script.
 
 	call_count++;
-	fprintf(stderr, "Malloc! %d\n", call_count);
-//    if (call_count == 1) {
- //       return NULL;  // Force malloc failure on the second call
- //   }
+	fprintf(stderr, "Malloc! #%d vs test #%d\n", call_count, failure_call);
+    if (call_count == failure_call) {
+       return NULL;  // Force malloc failure on the second call
+    }
 
     return real_malloc(size);  // Use the original malloc
 }

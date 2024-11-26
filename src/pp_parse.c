@@ -15,6 +15,7 @@
 /* Locates the command binary, checks permissions, else 
 ** 		sets command to NULL.
 ** Searches PATH (paths) then local directory for binaries
+** Local binaries must be prefixed with "./" to pass
 ** args array is in struct at passed index
 ** If the cmd is empty/blank, prints msg and sets to NULL
 */
@@ -37,7 +38,7 @@ static int	_validate_cmd(int idx, char *cmd, const char **paths, t_args *st)
 			if (check_access(fullpath, idx, st) != FAILURE)
 				return (SUCCESS);
 		}
-		if (check_access(cmd, idx, st) != FAILURE)
+		if (ft_strnstr(cmd, "./", 2) && check_access(cmd, idx, st) != FAILURE)
 			return (SUCCESS);
 	}
 	perror("PATH: command not found.");
@@ -75,11 +76,9 @@ static int	_load_cmdargs(char **argv, t_args *st)
 			free_arr((void **)arr, i + 1);
 			return (FAILURE);
 		}
-		process_string(arr);
 		st->execargs[i] = arr;
 	}
 	st->execargs[st->cmd_count] = NULL;
-	remove_outer_quotes(st->execargs);
 	return (SUCCESS);
 }
 
@@ -145,8 +144,13 @@ int	parse_args(int argc, char **argv, char **env, t_args *st)
 			err("Insufficient arguments.", NULL, NULL, EINVAL);
 	}
 	else
+	{
 		if (argc != MINARGS)
 			err("Incorrect arguments.", NULL, NULL, EINVAL);
+	}
+	if (0 == access(argv[argc - 1], F_OK))
+		if (-1 == access(argv[argc - 1], W_OK))
+			err("Open (output)", NULL, NULL, EACCES);
 	init_struct(argc, argv, env, st);
 	_prep_execargs(argv, env, st);
 	return (SUCCESS);

@@ -43,3 +43,13 @@ void	debug_print(const char *format, ...)
 		va_end(args);
 	}
 }
+
+void	printerr(char *s)
+{
+	int			i;
+	const int	len = ft_strlen(s);
+
+	i = -1;
+	while (++i < len)
+		ft_putchar_fd(s[i], 2);
+}

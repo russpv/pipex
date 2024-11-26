@@ -95,13 +95,13 @@ int			do_child_ops(int i, char *argv[], char *env[], t_args *st);
 /* string - used by parser */
 int			process_string(char **arr);
 void		remove_outer_quotes(char ***arr);
-int			get_line(int fd, char **buf);
 void		get_split_delim(const char *arg, char *sub);
 
 /* utils */
 int			check_access(char *path, int idx, t_args *st);
 void		debug_print(const char *msg, ...);
-void		print_live_processes(void);
+void		printerr(char *s);
+
 /* init */
 void		init_struct(int argc, char **argv, char **env, t_args *st);
 

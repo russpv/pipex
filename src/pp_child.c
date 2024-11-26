@@ -53,7 +53,7 @@ static inline void	_do_child_inputs(t_args *st, char *argv[], int i)
 	r = 0;
 	if (i == 0 && st->heredoc)
 		r = get_heredoc(argv[2], st);
-	else if (i == 0 && !st->heredoc)
+	else if (i == 0 && false == st->heredoc)
 		r = redirect(NULL, argv[1], STDIN_FILENO, NO_APND);
 	else
 		r = redirect(&st->fildes[i - 1][0], NULL, STDIN_FILENO, NO_APND);
@@ -88,13 +88,13 @@ static inline int	_do_child_outputs(t_args *st, int i)
  * 
  * Outputs redirected first in case of terminal error.
  * (Input problem does not exit immediately)
+ * Note: would be best to test file redirects before fork()'g
  */
 int	do_child_ops(int i, char *argv[], char *env[], t_args *st)
 {
 	_close_other_pipe_ends(st, i);
-	if (FAILURE == _do_child_outputs(st, i))
-		return (FAILURE);
 	_do_child_inputs(st, argv, i);
+	_do_child_outputs(st, i);
 	debug_print("Child exec'g %s, %s\n", st->cmdpaths[i], *st->execargs[i]);
 	if (st->cmdpaths[i] == NULL)
 		return (FAILURE);
